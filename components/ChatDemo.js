@@ -21,8 +21,11 @@ export default function ChatDemo() {
       });
       const data = await res.json();
       setMessages((prev) => [...prev, { text: data.response, sender: 'ai' }]);
-    } catch (error) {
-      setMessages((prev) => [...prev, { text: 'Error fetching response', sender: 'ai' }]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { text: 'Error fetching response', sender: 'ai' }
+      ]);
     }
   };
 
@@ -61,4 +64,5 @@ export default function ChatDemo() {
     </div>
   );
 }
+
 
