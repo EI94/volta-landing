@@ -1,4 +1,5 @@
 // app/demo/page.tsx
+import React from 'react'; // Aggiungi questa riga
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import DemoInterface from '../../components/DemoInterface';
@@ -15,6 +16,9 @@ export default function DemoPage(): JSX.Element {
     </>
   );
 }
+
+
+
 
 
 
