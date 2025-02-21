@@ -1,0 +1,21 @@
+/* styles/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variabili di tema */
+:root {
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --color-accent: #2563eb;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: 'Inter', sans-serif;
+}
+
+.transition {
+  transition: all 0.3s ease-in-out;
+}
