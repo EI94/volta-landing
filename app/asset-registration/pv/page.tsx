@@ -10,9 +10,10 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SaveIcon from '@mui/icons-material/Save';
+import { PVFormData } from '../types';
 
 // Componente per l'inserimento delle caratteristiche tecniche dell'impianto PV
-const TechnicalForm = ({ formData, setFormData }: any) => {
+const TechnicalForm = ({ formData, setFormData }: { formData: PVFormData, setFormData: (data: PVFormData) => void }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -206,7 +207,7 @@ const TechnicalForm = ({ formData, setFormData }: any) => {
 };
 
 // Componente per la selezione del revenue stream
-const RevenueStreamForm = ({ formData, setFormData }: any) => {
+const RevenueStreamForm = ({ formData, setFormData }: { formData: PVFormData, setFormData: (data: PVFormData) => void }) => {
   const [selectedRevenueStream, setSelectedRevenueStream] = useState<string>(formData.revenueStreamType || '');
   
   const handleRevenueStreamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -633,16 +634,21 @@ const RevenueStreamForm = ({ formData, setFormData }: any) => {
 export default function PVRegistrationPage() {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PVFormData>({
     name: '',
-    power: '',
-    efficiency: '',
-    hasTracking: false,
-    annualDegradation: '',
+    installedCapacity: '',
+    panelType: '',
+    installationDate: '',
+    expectedLifetime: '',
+    trackerTechnology: '',
+    orientation: '',
+    tilt: '',
+    pvTechnology: '',
     latitude: '',
     longitude: '',
     gridConnected: false,
-    hasIncentives: false
+    hasIncentives: false,
+    revenueStreamType: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

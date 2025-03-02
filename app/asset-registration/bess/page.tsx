@@ -9,9 +9,10 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
+import { BESSFormData } from '../types';
 
 // Componente per l'inserimento delle caratteristiche tecniche del BESS
-const TechnicalForm = ({ formData, setFormData }: any) => {
+const TechnicalForm = ({ formData, setFormData }: { formData: BESSFormData, setFormData: (data: BESSFormData) => void }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -211,7 +212,7 @@ const TechnicalForm = ({ formData, setFormData }: any) => {
 };
 
 // Componente per la selezione del revenue stream
-const RevenueStreamForm = ({ formData, setFormData }: any) => {
+const RevenueStreamForm = ({ formData, setFormData }: { formData: BESSFormData, setFormData: (data: BESSFormData) => void }) => {
   const [selectedRevenueStream, setSelectedRevenueStream] = useState<string>(formData.revenueStreamType || '');
   
   const handleRevenueStreamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -574,7 +575,7 @@ const RevenueStreamForm = ({ formData, setFormData }: any) => {
 export default function BESSRegistrationPage() {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<BESSFormData>({
     name: '',
     energyCapacity: '',
     powerCapacity: '',
@@ -582,10 +583,13 @@ export default function BESSRegistrationPage() {
     expectedLifetime: '',
     usageStrategy: '',
     batteryTechnology: '',
+    roundTripEfficiency: '',
+    degradationRate: '',
     latitude: '',
     longitude: '',
     gridConnected: false,
-    hasIncentives: false
+    hasIncentives: false,
+    revenueStreamType: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
