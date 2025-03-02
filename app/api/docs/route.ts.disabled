@@ -1,0 +1,97 @@
+import { NextResponse } from 'next/server';
+import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
+import { EnergyMarketSchema, WeatherSchema, BessKPISchema } from '@/lib/validators';
+
+const registry = new OpenAPIRegistry();
+
+// Registra gli schemi
+registry.register('EnergyMarket', EnergyMarketSchema);
+registry.register('Weather', WeatherSchema);
+registry.register('BessKPI', BessKPISchema);
+
+const openApiDocument = {
+  openapi: '3.0.0',
+  info: {
+    title: 'API BESS',
+    version: '1.0.0',
+    description: 'API per il sistema di gestione della batteria',
+  },
+  paths: {
+    '/api/energy-market': {
+      get: {
+        summary: 'Dati del mercato energetico',
+        responses: {
+          200: {
+            description: 'Dati del mercato recuperati con successo',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/EnergyMarket'
+                }
+              },
+            },
+          },
+          429: {
+            description: 'Troppe richieste',
+          },
+          500: {
+            description: 'Errore del server',
+          },
+        },
+      },
+    },
+    '/api/weather': {
+      get: {
+        summary: 'Dati meteo',
+        responses: {
+          200: {
+            description: 'Dati meteo recuperati con successo',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/Weather'
+                }
+              },
+            },
+          },
+          429: {
+            description: 'Troppe richieste',
+          },
+          500: {
+            description: 'Errore del server',
+          },
+        },
+      },
+    },
+    '/api/bess-kpi': {
+      get: {
+        summary: 'KPI del sistema BESS',
+        responses: {
+          200: {
+            description: 'KPI recuperati con successo',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/BessKPI'
+                }
+              },
+            },
+          },
+          429: {
+            description: 'Troppe richieste',
+          },
+          500: {
+            description: 'Errore del server',
+          },
+        },
+      },
+    },
+  },
+  components: {
+    schemas: registry.definitions,
+  },
+};
+
+export async function GET() {
+  return NextResponse.json(openApiDocument);
+} 

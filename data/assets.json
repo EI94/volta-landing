@@ -1,0 +1,35 @@
+[
+  {
+    "id": "65b4e4e3-bbc9-4f65-9325-321ea2869aef",
+    "name": "BESS Demo",
+    "location": {
+      "city": "Milano",
+      "country": "IT",
+      "zone": "NORD",
+      "coordinates": {
+        "lat": 45.4642,
+        "lng": 9.19
+      }
+    },
+    "capacity": {
+      "power": 20,
+      "energy": 80
+    },
+    "efficiency": 92,
+    "revenueStream": {
+      "type": "MERCHANT",
+      "preferredMarkets": [
+        "MGP",
+        "MI"
+      ],
+      "minimumPrice": 75,
+      "maximumPrice": 35
+    },
+    "constraints": {
+      "maxCycles": 1,
+      "minSOC": 10,
+      "maxSOC": 90,
+      "minSOH": 80
+    }
+  }
+]
