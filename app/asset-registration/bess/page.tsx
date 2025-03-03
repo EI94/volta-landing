@@ -9,15 +9,27 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
-import { BESSFormData } from '../types';
+import { 
+  BESSFormData, 
+  RevenueStreamType, 
+  RevenueStreamData, 
+  TollingRevenueStream, 
+  CapacityMarketRevenueStream, 
+  MACSeRevenueStream, 
+  MerchantRevenueStream 
+} from '../types';
 
 // Componente per l'inserimento delle caratteristiche tecniche del BESS
 const TechnicalForm = ({ formData, setFormData }: { formData: BESSFormData, setFormData: (data: BESSFormData) => void }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+    
+    // Gestiamo i valori in base al tipo di input
+    const newValue = type === 'checkbox' ? checked : value;
+    
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     });
   };
 
@@ -221,7 +233,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: BESSFormData, 
     setFormData({
       ...formData,
       revenueStreamType: value
-    });
+    } as BESSFormData);
   };
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,9 +287,9 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: BESSFormData, 
               required
               fullWidth
               label="Condizioni economiche"
-              name="tollingRemunerationType"
+              name="tollingRemunerationType" 
               value={formData.tollingRemunerationType || ''}
-              onChange={handleChange}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e)}
               variant="outlined"
               select
             >
@@ -577,19 +589,18 @@ export default function BESSRegistrationPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<BESSFormData>({
     name: '',
-    energyCapacity: '',
-    powerCapacity: '',
-    efficiency: '',
-    expectedLifetime: '',
-    usageStrategy: '',
-    batteryTechnology: '',
-    roundTripEfficiency: '',
-    degradationRate: '',
-    latitude: '',
-    longitude: '',
-    gridConnected: false,
+    description: '',
+    latitude: 0,
+    longitude: 0,
+    gridConnected: true,
     hasIncentives: false,
-    revenueStreamType: '',
+    incentivesDescription: '',
+    capacity: 0,
+    power: 0,
+    roundTripEfficiency: 0,
+    maxCycles: 0,
+    degradation: 0,
+    revenueStreams: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -627,8 +638,8 @@ export default function BESSRegistrationPage() {
         type: 'BESS',
         location: {
           coordinates: {
-            lat: parseFloat(formData.latitude as string),
-            lng: parseFloat(formData.longitude as string)
+            lat: typeof formData.latitude === 'string' ? parseFloat(formData.latitude) : formData.latitude,
+            lng: typeof formData.longitude === 'string' ? parseFloat(formData.longitude) : formData.longitude
           },
           country: 'IT',
           // Qui potremmo aggiungere anche city e zone in base alla posizione
@@ -655,20 +666,54 @@ export default function BESSRegistrationPage() {
       // Logica specifica per ogni tipo di revenue stream
       if (formData.revenueStreamType === 'tolling') {
         assetData.revenueStream = {
-          ...assetData.revenueStream,
-          operator: formData.tollingOperator,
-          remunerationType: formData.tollingRemunerationType,
-          remunerationValue: parseFloat(formData.tollingRemunerationValue as string),
-          contractDuration: parseInt(formData.tollingContractDuration as string),
-          penalties: formData.tollingPenalties || null
-        };
+          type: 'tolling',
+          counterparty: '',
+          contractDuration: typeof formData.tollingContractDuration === 'string' ? 
+            parseInt(formData.tollingContractDuration) : (formData.tollingContractDuration || 0),
+          tollingRemunerationType: formData.tollingRemunerationType || '',
+          startDate: '',
+          endDate: '',
+          operator: formData.tollingOperator || ''
+        } as TollingRevenueStream;
       } else if (formData.revenueStreamType === 'capacityMarket') {
         assetData.revenueStream = {
-          ...assetData.revenueStream,
+          type: 'capacityMarket',
+          counterparty: '',
+          contractDuration: parseInt(formData.cmDuration as string),
           capacityVolume: parseFloat(formData.cmCapacityVolume as string),
-          capacityPrice: parseFloat(formData.cmCapacityPrice as string),
-          duration: parseInt(formData.cmDuration as string)
-        };
+          capacityPrice: parseFloat(formData.cmCapacityPrice as string)
+        } as CapacityMarketRevenueStream;
+      } else if (formData.revenueStreamType === 'macse') {
+        assetData.revenueStream = {
+          type: 'macse',
+          counterparty: '',
+          contractDuration: parseInt(formData.macseServiceType as string),
+          macseServiceType: formData.macseServiceType || '',
+          minPrice: parseFloat(formData.macseMinPrice as string)
+        } as MACSeRevenueStream;
+      } else if (formData.revenueStreamType === 'ppa') {
+        assetData.revenueStream = {
+          type: 'ppa',
+          counterparty: formData.ppaCounterparty || '',
+          contractDuration: parseInt(formData.ppaContractDuration as string),
+          priceType: '',
+          strikePrice: 0,
+          fixedPrice: 0,
+          startDate: '',
+          endDate: '',
+          price: parseFloat(formData.ppaPrice as string),
+          guaranteedVolume: parseFloat(formData.ppaGuaranteedVolume as string)
+        } as PPARevenueStream;
+      } else if (formData.revenueStreamType === 'merchant') {
+        assetData.revenueStream = {
+          type: 'merchant',
+          estimatedRevenue: parseFloat(formData.merchantEstimatedRevenue as string),
+          strategy: formData.merchantStrategy || '',
+          mgp: formData.merchantMGP || false,
+          mi: formData.merchantMI || false,
+          msd: formData.merchantMSD || false,
+          altro: formData.merchantAltro || false
+        } as MerchantRevenueStream;
       }
       
       // Chiamata alla API per salvare l'asset
@@ -696,6 +741,62 @@ export default function BESSRegistrationPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const addRevenueStream = (type: RevenueStreamType) => {
+    let newStream: RevenueStreamData;
+    
+    if (type === 'tolling') {
+      newStream = {
+        type: 'tolling',
+        counterparty: '',
+        contractDuration: 0,
+        tollingRemunerationType: '',
+        startDate: '',
+        endDate: ''
+      } as TollingRevenueStream;
+    } else if (type === 'capacityMarket') {
+      newStream = {
+        type: 'capacityMarket',
+        counterparty: '',
+        contractDuration: 0,
+        capacityVolume: 0
+      } as CapacityMarketRevenueStream;
+    } else if (type === 'macse') {
+      newStream = {
+        type: 'macse',
+        counterparty: '',
+        contractDuration: 0,
+        macseServiceType: ''
+      } as MACSeRevenueStream;
+    } else if (type === 'merchant') {
+      newStream = {
+        type: 'merchant',
+        estimatedRevenue: 0
+      } as MerchantRevenueStream;
+    } else {
+      // Fallback per altri tipi non supportati per BESS
+      return;
+    }
+    
+    setFormData({
+      ...formData,
+      revenueStreams: [...formData.revenueStreams, newStream]
+    });
+  };
+
+  const handleRevenueStreamChange = (index: number, field: string, value: any) => {
+    const updatedStreams = [...formData.revenueStreams];
+    
+    // Aggiorniamo in modo sicuro con controllo dei tipi
+    if (field in updatedStreams[index]) {
+      (updatedStreams[index] as any)[field] = value;
+    }
+    
+    setFormData({
+      ...formData,
+      revenueStreams: updatedStreams
+    });
   };
 
   return (

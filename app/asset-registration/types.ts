@@ -1,47 +1,175 @@
 // Definizione delle interfacce per la registrazione degli asset
 
-// Interfaccia di base per i campi comuni di tutti i form
+// Definizioni di base
 export interface BaseFormData {
   name: string;
-  latitude: string;
-  longitude: string;
+  description: string;
+  latitude: number;
+  longitude: number;
   gridConnected: boolean;
   hasIncentives: boolean;
-  incentivesDescription?: string; // Campo opzionale per la descrizione degli incentivi
-  revenueStreamType: string;
+  incentivesDescription: string;
+  revenueStreamType?: string;
 }
 
-// Interfaccia per il form di registrazione PV
+// Definizione corretta per i flussi di ricavi
+export type RevenueStreamType = 'ppa' | 'tolling' | 'merchant' | 'capacityMarket' | 'macse';
+
+// Base per tutti i flussi di ricavi
+export interface BaseRevenueStream {
+  type: RevenueStreamType;
+}
+
+// PPA Revenue Stream
+export interface PPARevenueStream extends BaseRevenueStream {
+  type: 'ppa';
+  counterparty: string;
+  contractDuration: number;
+  priceType: string;
+  strikePrice?: number;
+  fixedPrice?: number;
+  startDate: string;
+  endDate: string;
+  contractPrice?: number;
+  indexed?: boolean;
+  indexType?: string;
+  guaranteedVolume?: number;
+  flexibilityClauses?: string;
+}
+
+// Tolling Revenue Stream
+export interface TollingRevenueStream extends BaseRevenueStream {
+  type: 'tolling';
+  counterparty: string;
+  operator?: string;
+  contractDuration: number;
+  tollingRemunerationType: string;
+  remunerationType?: string;
+  remunerationValue?: number;
+  penalties?: string;
+  startDate: string;
+  endDate: string;
+}
+
+// Capacity Market Revenue Stream
+export interface CapacityMarketRevenueStream extends BaseRevenueStream {
+  type: 'capacityMarket';
+  counterparty: string;
+  contractDuration: number;
+  capacityVolume: number;
+  capacityPrice?: number;
+  duration?: number;
+}
+
+// MACSE Revenue Stream
+export interface MACSeRevenueStream extends BaseRevenueStream {
+  type: 'macse';
+  counterparty: string;
+  contractDuration: number;
+  macseServiceType: string;
+  minPrice?: number;
+}
+
+// Merchant Revenue Stream
+export interface MerchantRevenueStream extends BaseRevenueStream {
+  type: 'merchant';
+  estimatedRevenue: number;
+  strategy?: string;
+  mgp?: boolean;
+  mi?: boolean;
+  msd?: boolean;
+  altro?: boolean;
+}
+
+// Union type per tutti i tipi di revenue stream
+export type RevenueStreamData = PPARevenueStream | TollingRevenueStream | CapacityMarketRevenueStream | MACSeRevenueStream | MerchantRevenueStream;
+
+// Form data per impianti fotovoltaici
 export interface PVFormData extends BaseFormData {
-  installedCapacity: string;
-  panelType: string;
-  installationDate: string;
-  expectedLifetime: string;
-  trackerTechnology: string;
-  orientation: string;
-  tilt: string;
-  pvTechnology: string;
-  // Campi specifici per vari revenue stream
-  ppaContractLength?: string;
+  power: number;
+  efficiency: number;
+  hasTracking: boolean;
+  annualDegradation: number;
+  productionCurveFile?: File | string;
+  revenueStreams: RevenueStreamData[];
+  
+  // Campi PPA
   ppaCounterparty?: string;
-  ppaPrice?: string;
-  feedInTariff?: string;
-  wholeSaleMarketId?: string;
+  ppaContractDuration?: string | number;
+  ppaPrice?: string | number;
+  ppaIndexed?: boolean;
+  ppaIndexType?: string;
+  ppaGuaranteedVolume?: string | number;
+  ppaFlexibilityClauses?: string;
+  
+  // Campi Tolling
+  tollingOperator?: string;
+  tollingRemunerationType?: string;
+  tollingRemunerationValue?: string | number;
+  tollingContractDuration?: string | number;
+  tollingPenalties?: string;
+  
+  // Campi Merchant
+  merchantMGP?: boolean;
+  merchantMI?: boolean;
+  merchantMSD?: boolean;
+  merchantAltro?: boolean;
+  merchantStrategy?: string;
+  merchantEstimatedRevenue?: string | number;
+  
+  // Altri campi
+  ritiroTariffa?: string | number;
+  ritiroStartDate?: string;
+  scambioTipo?: string;
+  scambioValoreMedio?: string | number;
+  altroDescrizione?: string;
+  altroModalitaCalcolo?: string;
 }
 
-// Interfaccia per il form di registrazione BESS
+// Form data per sistemi di accumulo
 export interface BESSFormData extends BaseFormData {
-  energyCapacity: string;
-  powerCapacity: string;
-  efficiency: string;
-  expectedLifetime: string;
-  usageStrategy: string;
-  batteryTechnology: string;
-  roundTripEfficiency: string;
-  degradationRate: string;
-  // Campi specifici per vari revenue stream
+  capacity: number;
+  power: number;
+  roundTripEfficiency: number;
+  maxCycles: number;
+  degradation: number;
+  revenueStreams: RevenueStreamData[];
+  
+  // Campi tecnici aggiuntivi
+  energyCapacity?: string | number;
+  powerCapacity?: string | number;
+  efficiency?: string | number;
+  expectedLifetime?: string | number;
+  usageStrategy?: string;
+  batteryTechnology?: string;
+  
+  // Campi Tolling
   tollingOperator?: string;
-  tollingRate?: string;
-  ancillaryServiceType?: string;
-  arbitrageStrategy?: string;
+  tollingRemunerationType?: string;
+  tollingRemunerationValue?: string | number;
+  tollingContractDuration?: string | number;
+  tollingPenalties?: string;
+  
+  // Campi Capacity Market
+  cmCapacityVolume?: string | number;
+  cmCapacityPrice?: string | number;
+  cmDuration?: string | number;
+  
+  // Campi MACSE
+  macseServiceType?: string;
+  macseMinPrice?: string | number;
+  
+  // Campi PPA
+  ppaCounterparty?: string;
+  ppaContractDuration?: string | number;
+  ppaPrice?: string | number;
+  ppaGuaranteedVolume?: string | number;
+  
+  // Campi Merchant
+  merchantMGP?: boolean;
+  merchantMI?: boolean;
+  merchantMSD?: boolean;
+  merchantAltro?: boolean;
+  merchantStrategy?: string;
+  merchantEstimatedRevenue?: string | number;
 } 

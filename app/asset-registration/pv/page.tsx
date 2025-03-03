@@ -10,15 +10,19 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SaveIcon from '@mui/icons-material/Save';
-import { PVFormData } from '../types';
+import { PVFormData, RevenueStreamType, RevenueStreamData, PPARevenueStream, MerchantRevenueStream } from '../types';
 
 // Componente per l'inserimento delle caratteristiche tecniche dell'impianto PV
 const TechnicalForm = ({ formData, setFormData }: { formData: PVFormData, setFormData: (data: PVFormData) => void }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+    
+    // Gestiamo i valori in base al tipo di input
+    const newValue = type === 'checkbox' ? checked : value;
+    
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     });
   };
 
@@ -118,7 +122,7 @@ const TechnicalForm = ({ formData, setFormData }: { formData: PVFormData, setFor
                 if (file) {
                   setFormData({
                     ...formData,
-                    productionCurveFile: file.name
+                    productionCurveFile: file.name as unknown as string
                   });
                 }
               }}
@@ -212,11 +216,11 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: PVFormData, se
   
   const handleRevenueStreamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setSelectedRevenueStream(value);
+    
     setFormData({
       ...formData,
       revenueStreamType: value
-    });
+    } as PVFormData);
   };
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -636,19 +640,17 @@ export default function PVRegistrationPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<PVFormData>({
     name: '',
-    installedCapacity: '',
-    panelType: '',
-    installationDate: '',
-    expectedLifetime: '',
-    trackerTechnology: '',
-    orientation: '',
-    tilt: '',
-    pvTechnology: '',
-    latitude: '',
-    longitude: '',
-    gridConnected: false,
+    description: '',
+    latitude: 0,
+    longitude: 0,
+    gridConnected: true,
     hasIncentives: false,
-    revenueStreamType: '',
+    incentivesDescription: '',
+    power: 0,
+    efficiency: 0,
+    hasTracking: false,
+    annualDegradation: 0,
+    revenueStreams: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -686,8 +688,8 @@ export default function PVRegistrationPage() {
         type: 'PV',
         location: {
           coordinates: {
-            lat: parseFloat(formData.latitude as string),
-            lng: parseFloat(formData.longitude as string)
+            lat: typeof formData.latitude === 'string' ? parseFloat(formData.latitude) : formData.latitude,
+            lng: typeof formData.longitude === 'string' ? parseFloat(formData.longitude) : formData.longitude
           },
           country: 'IT',
           // Qui potremmo aggiungere anche city e zone in base alla posizione
@@ -713,15 +715,14 @@ export default function PVRegistrationPage() {
       // Logica specifica per ogni tipo di revenue stream
       if (formData.revenueStreamType === 'ppa') {
         assetData.revenueStream = {
-          ...assetData.revenueStream,
-          counterparty: formData.ppaCounterparty,
-          contractDuration: parseInt(formData.ppaContractDuration as string),
-          contractPrice: parseFloat(formData.ppaPrice as string),
-          indexed: formData.ppaIndexed,
-          indexType: formData.ppaIndexType || null,
-          guaranteedVolume: parseFloat(formData.ppaGuaranteedVolume as string),
-          flexibilityClauses: formData.ppaFlexibilityClauses || null
-        };
+          type: 'ppa',
+          counterparty: formData.ppaCounterparty || '',
+          contractDuration: typeof formData.ppaContractDuration === 'string' ? 
+            parseInt(formData.ppaContractDuration) : (formData.ppaContractDuration || 0),
+          priceType: '',
+          startDate: '',
+          endDate: ''
+        } as PPARevenueStream;
       }
       
       // Chiamata alla API per salvare l'asset
@@ -749,6 +750,34 @@ export default function PVRegistrationPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const addRevenueStream = (type: RevenueStreamType) => {
+    let newStream: RevenueStreamData;
+    
+    if (type === 'ppa') {
+      newStream = {
+        type: 'ppa',
+        counterparty: '',
+        contractDuration: 0,
+        priceType: '',
+        startDate: '',
+        endDate: ''
+      } as PPARevenueStream;
+    } else if (type === 'merchant') {
+      newStream = {
+        type: 'merchant',
+        estimatedRevenue: 0
+      } as MerchantRevenueStream;
+    } else {
+      // Fallback per altri tipi non supportati per PV
+      return;
+    }
+    
+    setFormData({
+      ...formData,
+      revenueStreams: [...formData.revenueStreams, newStream]
+    });
   };
 
   return (
