@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { 
   Box, Container, Typography, Button, Paper, Grid, TextField, 
   FormControlLabel, Switch, MenuItem, InputAdornment, Stepper,
-  Step, StepLabel, StepContent, Alert, Divider
+  Step, StepLabel, StepContent, Alert, Divider, FormControl, FormLabel, RadioGroup, FormControlLabel as MuiFormControlLabel, Radio
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SaveIcon from '@mui/icons-material/Save';
-import { PVFormData, RevenueStreamType, RevenueStreamData, PPARevenueStream, MerchantRevenueStream } from '../types';
+import { PVFormData, RevenueStreamData } from '../types';
 
 // Componente per l'inserimento delle caratteristiche tecniche dell'impianto PV
 const TechnicalForm = ({ formData, setFormData }: { formData: PVFormData, setFormData: (data: PVFormData) => void }) => {
@@ -130,7 +130,7 @@ const TechnicalForm = ({ formData, setFormData }: { formData: PVFormData, setFor
           </Button>
           {formData.productionCurveFile && (
             <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
-              File selezionato: {formData.productionCurveFile}
+              File selezionato: {typeof formData.productionCurveFile === 'string' ? formData.productionCurveFile : formData.productionCurveFile.name}
             </Typography>
           )}
         </Grid>
@@ -214,15 +214,18 @@ const TechnicalForm = ({ formData, setFormData }: { formData: PVFormData, setFor
 const RevenueStreamForm = ({ formData, setFormData }: { formData: PVFormData, setFormData: (data: PVFormData) => void }) => {
   const [selectedRevenueStream, setSelectedRevenueStream] = useState<string>(formData.revenueStreamType || '');
   
+  console.log('RevenueStreamForm - Current formData:', formData);
+
   const handleRevenueStreamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
+    console.log('Revenue stream cambiato a:', value);
+    setSelectedRevenueStream(value);
     setFormData({
       ...formData,
       revenueStreamType: value
-    } as PVFormData);
+    });
   };
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -234,29 +237,24 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: PVFormData, se
   return (
     <Box sx={{ mt: 3 }}>
       <Typography variant="h6" gutterBottom>
-        Seleziona il tipo di revenue stream
+        Configurazione dei Flussi di Ricavo
       </Typography>
       
-      <TextField
-        select
-        fullWidth
-        label="Tipo di Revenue Stream"
-        name="revenueStreamType"
-        value={selectedRevenueStream}
-        onChange={handleRevenueStreamChange}
-        variant="outlined"
-        sx={{ mb: 4 }}
-      >
-        <MenuItem value="ppa">PPA (Power Purchase Agreement)</MenuItem>
-        <MenuItem value="tolling">Tolling</MenuItem>
-        <MenuItem value="merchant">Merchant (GME)</MenuItem>
-        <MenuItem value="ritiroDesicato">Ritiro Dedicato</MenuItem>
-        <MenuItem value="scambioSulPosto">Scambio sul Posto</MenuItem>
-        <MenuItem value="altro">Altro</MenuItem>
-      </TextField>
+      <FormControl component="fieldset" sx={{ mb: 2, mt: 2 }}>
+        <FormLabel component="legend">Tipo di Revenue Stream</FormLabel>
+        <RadioGroup
+          name="revenueStreamType"
+          value={selectedRevenueStream}
+          onChange={handleRevenueStreamChange}
+        >
+          <MuiFormControlLabel value="PPA" control={<Radio />} label="Power Purchase Agreement (PPA)" />
+          <MuiFormControlLabel value="MERCHANT" control={<Radio />} label="Mercato (Merchant)" />
+          <MuiFormControlLabel value="MACSE" control={<Radio />} label="Mercato Ambientale (MACSE)" />
+        </RadioGroup>
+      </FormControl>
       
       {/* Campi specifici per PPA */}
-      {selectedRevenueStream === 'ppa' && (
+      {selectedRevenueStream === 'PPA' && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <TextField
@@ -367,7 +365,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: PVFormData, se
       )}
       
       {/* Campi specifici per Tolling */}
-      {selectedRevenueStream === 'tolling' && (
+      {selectedRevenueStream === 'MACSE' && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <TextField
@@ -442,7 +440,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: PVFormData, se
       )}
       
       {/* Campi specifici per Merchant */}
-      {selectedRevenueStream === 'merchant' && (
+      {selectedRevenueStream === 'MERCHANT' && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
@@ -524,7 +522,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: PVFormData, se
       )}
       
       {/* Campi specifici per Ritiro Dedicato */}
-      {selectedRevenueStream === 'ritiroDesicato' && (
+      {selectedRevenueStream === 'RITIRODESICATO' && (
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6}>
             <TextField
@@ -561,7 +559,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: PVFormData, se
       )}
       
       {/* Campi specifici per Scambio sul Posto */}
-      {selectedRevenueStream === 'scambioSulPosto' && (
+      {selectedRevenueStream === 'SCAMBIOSULPOSTO' && (
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6}>
             <TextField
@@ -599,7 +597,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: PVFormData, se
       )}
       
       {/* Campi specifici per Altro */}
-      {selectedRevenueStream === 'altro' && (
+      {selectedRevenueStream === 'ALTRO' && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <TextField
@@ -681,9 +679,36 @@ export default function PVRegistrationPage() {
     setIsSubmitting(true);
     setError(null);
     
+    console.log('Invio dati del form:', formData);
+    
     try {
+      // Definiamo un'interfaccia per l'oggetto assetData
+      interface AssetData {
+        name: string;
+        type: string;
+        location: {
+          coordinates: {
+            lat: number;
+            lng: number;
+          };
+          country: string;
+        };
+        capacity: {
+          power: number;
+        };
+        efficiency: number;
+        details: {
+          hasTracking: boolean;
+          annualDegradation: number;
+          gridConnected: boolean;
+          hasIncentives: boolean;
+          incentivesDescription: string | null;
+        };
+        revenueStream?: RevenueStreamData; // Usiamo il tipo corretto importato da types.ts
+      }
+
       // Preparazione dei dati per la API
-      const assetData = {
+      const assetData: AssetData = {
         name: formData.name,
         type: 'PV',
         location: {
@@ -695,35 +720,59 @@ export default function PVRegistrationPage() {
           // Qui potremmo aggiungere anche city e zone in base alla posizione
         },
         capacity: {
-          power: parseFloat(formData.power as string),
+          power: typeof formData.power === 'string' ? parseFloat(formData.power) : formData.power,
         },
-        efficiency: parseFloat(formData.efficiency as string),
+        efficiency: typeof formData.efficiency === 'string' ? parseFloat(formData.efficiency) : formData.efficiency,
         details: {
           hasTracking: formData.hasTracking,
-          annualDegradation: parseFloat(formData.annualDegradation as string),
+          annualDegradation: typeof formData.annualDegradation === 'string' ? parseFloat(formData.annualDegradation) : formData.annualDegradation,
           gridConnected: formData.gridConnected,
           hasIncentives: formData.hasIncentives,
           incentivesDescription: formData.incentivesDescription || null
         },
-        revenueStream: {
-          type: formData.revenueStreamType,
-          // Aggiungi qui i dettagli specifici del revenue stream selezionato
-          // in base al tipo di revenueStreamType
-        }
+        revenueStream: undefined // Inizializziamo la proprietà revenueStream come undefined
       };
       
+      console.log('Tipo di revenue stream:', formData.revenueStreamType);
+      
       // Logica specifica per ogni tipo di revenue stream
-      if (formData.revenueStreamType === 'ppa') {
+      if (formData.revenueStreamType === 'MACSE') {
         assetData.revenueStream = {
-          type: 'ppa',
+          type: 'MACSE',
+          counterparty: formData.macseCounterparty || '',
+          contractDuration: typeof formData.macseContractDuration === 'string' ?
+            parseInt(formData.macseContractDuration) : (formData.macseContractDuration || 0),
+          macseServiceType: formData.macseServiceType || '',
+          minPrice: formData.macseMinPrice ? parseFloat(formData.macseMinPrice.toString()) : undefined
+        };
+      } else if (formData.revenueStreamType === 'PPA') {
+        assetData.revenueStream = {
+          type: 'PPA',
           counterparty: formData.ppaCounterparty || '',
           contractDuration: typeof formData.ppaContractDuration === 'string' ? 
             parseInt(formData.ppaContractDuration) : (formData.ppaContractDuration || 0),
-          priceType: '',
-          startDate: '',
-          endDate: ''
-        } as PPARevenueStream;
+          priceType: formData.ppaIndexed ? 'indexed' : 'fixed',
+          fixedPrice: formData.ppaPrice ? parseFloat(formData.ppaPrice.toString()) : undefined,
+          indexed: formData.ppaIndexed || false,
+          indexType: formData.ppaIndexType || '',
+          guaranteedVolume: formData.ppaGuaranteedVolume ? parseFloat(formData.ppaGuaranteedVolume.toString()) : undefined,
+          flexibilityClauses: formData.ppaFlexibilityClauses || '',
+          startDate: '',  // Da completare con i campi corretti del form
+          endDate: ''     // Da completare con i campi corretti del form
+        };
+      } else if (formData.revenueStreamType === 'MERCHANT') {
+        assetData.revenueStream = {
+          type: 'MERCHANT',
+          estimatedRevenue: formData.merchantEstimatedRevenue ? parseFloat(formData.merchantEstimatedRevenue.toString()) : 0,
+          strategy: formData.merchantStrategy || '',
+          mgp: formData.merchantMGP || false,
+          mi: formData.merchantMI || false,
+          msd: formData.merchantMSD || false,
+          altro: formData.merchantAltro || false
+        };
       }
+      
+      console.log('Dati asset preparati per invio:', assetData);
       
       // Chiamata alla API per salvare l'asset
       const response = await fetch('/api/assets', {
@@ -734,10 +783,16 @@ export default function PVRegistrationPage() {
         body: JSON.stringify(assetData),
       });
       
+      console.log('Risposta API:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Errore API:', errorData);
         throw new Error(errorData.error || 'Errore durante la registrazione dell\'asset');
       }
+      
+      const responseData = await response.json();
+      console.log('Risposta API completa:', responseData);
       
       setSuccess(true);
       // Dopo 2 secondi, reindirizza alla dashboard
@@ -746,38 +801,11 @@ export default function PVRegistrationPage() {
       }, 2000);
       
     } catch (error) {
+      console.error('Errore nella sottomissione:', error);
       setError((error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const addRevenueStream = (type: RevenueStreamType) => {
-    let newStream: RevenueStreamData;
-    
-    if (type === 'ppa') {
-      newStream = {
-        type: 'ppa',
-        counterparty: '',
-        contractDuration: 0,
-        priceType: '',
-        startDate: '',
-        endDate: ''
-      } as PPARevenueStream;
-    } else if (type === 'merchant') {
-      newStream = {
-        type: 'merchant',
-        estimatedRevenue: 0
-      } as MerchantRevenueStream;
-    } else {
-      // Fallback per altri tipi non supportati per PV
-      return;
-    }
-    
-    setFormData({
-      ...formData,
-      revenueStreams: [...formData.revenueStreams, newStream]
-    });
   };
 
   return (
@@ -857,7 +885,7 @@ export default function PVRegistrationPage() {
             
             {activeStep === steps.length && (
               <Paper square elevation={0} sx={{ p: 3 }}>
-                <Typography>Tutti i passaggi completati - Puoi ora registrare l'asset</Typography>
+                <Typography>Tutti i passaggi completati - Puoi ora registrare l&apos;asset</Typography>
                 <Button 
                   onClick={handleSubmit} 
                   sx={{ mt: 1, mr: 1 }} 

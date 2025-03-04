@@ -8,6 +8,8 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 // Definisci qui la tua API_KEY per i dati di mercato (es. GME o altri provider)
+// Questa API_KEY sarà utilizzata in produzione per le chiamate ai servizi di dati di mercato
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const MARKET_API_KEY = process.env.MARKET_API_KEY || '';
 
 // Tipi di mercato disponibili
@@ -47,8 +49,23 @@ async function fetchMarketData(marketType: MarketType, zone: string): Promise<Ma
 
   try {
     // Simulazione chiamata API esterna
-    // In produzione, dovresti utilizzare fetch() per chiamare l'API reale
+    // In produzione, dovresti utilizzare fetch() per chiamare l'API reale, per esempio:
+    /*
+    const response = await fetch(`https://api.energymarket.com/data?marketType=${marketType}&zone=${zone}`, {
+      headers: {
+        'Authorization': `Bearer ${MARKET_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
     
+    if (!response.ok) {
+      throw new Error(`Errore nella chiamata API: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data as MarketData;
+    */
+
     // NOTA: Questo è solo un esempio, in produzione dovrai implementare
     // la logica per connetterti all'API del fornitore di dati
     
@@ -134,11 +151,15 @@ export async function GET(request: NextRequest) {
     if (!rateLimitResult.success) {
       const error = new Error('Troppe richieste. Riprova più tardi.');
       await logger.logRequest(request, 429, startTime, error);
-      await metrics.recordRequest(429, performance.now() - startTime);
-      return NextResponse.json(
-        { error: error.message },
-        { status: 429 }
+      await metrics.recordRequest(
+        'GET', 
+        request.url, 
+        429, 
+        performance.now() - startTime, 
+        request.headers.get('x-forwarded-for') || 'anonymous',
+        request.headers.get('user-agent') || 'unknown'
       );
+      return rateLimitResult.response;
     }
 
     // Recupera i dati dal cache o chiama l'API
@@ -146,7 +167,7 @@ export async function GET(request: NextRequest) {
     const data = await cacheData(
       cacheKey,
       async () => fetchMarketData(marketType, zone),
-      { ttl: 900 } // Cache per 15 minuti
+      900 // Cache per 15 minuti
     );
 
     // Valida i dati
@@ -154,7 +175,14 @@ export async function GET(request: NextRequest) {
     
     // Log e metriche della richiesta riuscita
     await logger.logRequest(request, 200, startTime);
-    await metrics.recordRequest(200, performance.now() - startTime);
+    await metrics.recordRequest(
+      'GET', 
+      request.url, 
+      200, 
+      performance.now() - startTime, 
+      request.headers.get('x-forwarded-for') || 'anonymous',
+      request.headers.get('user-agent') || 'unknown'
+    );
     
     return NextResponse.json(validatedData);
   } catch (error) {
@@ -162,7 +190,14 @@ export async function GET(request: NextRequest) {
     
     // Log e metriche dell'errore
     await logger.logRequest(request, 500, startTime, error as Error);
-    await metrics.recordRequest(500, performance.now() - startTime);
+    await metrics.recordRequest(
+      'GET', 
+      request.url, 
+      500, 
+      performance.now() - startTime, 
+      request.headers.get('x-forwarded-for') || 'anonymous',
+      request.headers.get('user-agent') || 'unknown'
+    );
     
     return NextResponse.json(
       { error: 'Errore nel recupero dei dati di mercato' },

@@ -1,8 +1,5 @@
-// @ts-nocheck
-// Disabilito temporaneamente la verifica dei tipi per questo file
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea, TooltipProps } from 'recharts';
 import Notification from './Notification';
 
 interface ModelWeights {
@@ -11,46 +8,38 @@ interface ModelWeights {
   efficiencyWeight: number;
 }
 
+interface Action {
+  type: 'CHARGE' | 'DISCHARGE' | 'HOLD';
+  power: number;
+  expectedRevenue: number;
+  confidence: number;
+}
+
 interface AIAgentProps {
   batteryCharge: number;
   marketPrice: number;
   solarIrradiance: number;
   temperature: number;
   efficiency: number;
-  onActionExecute?: (action: any) => void;
-  autoMode?: boolean;
-  currentState?: {
-    bess: {
-      data: {
-        efficiency: number;
-        health: number;
-        cycle_count: number;
-        revenue_today: number;
-        roi_percent: number;
-      };
-    };
-  };
-  metrics: MetricsHistory;
-  onExecute: () => void;
-  assetType: 'bess' | 'pv';
-  pvData?: {
-    actualOutputMW: number;
-    expectedOutputMW: number;
-    performanceRatio: number;
-    specificYield: number;
-    soilingRatio: number;
-    inverterEfficiency: number;
-    moduleHealth: number;
+  hasAlert?: boolean;
+  onActionExecute: (action: Action) => void;
+  autoExecuteEnabled: boolean;
+  metrics: {
+    metrics: {
+      timestamp: string;
+      dailyRevenue: number;
+      roi: number;
+      healthScore: number;
+      averageEfficiency: number;
+      cycleCount: number;
+      id?: string;
+      key?: string;
+    }[];
   };
 }
 
 interface AgentDecision {
-  action: {
-    type: 'CHARGE' | 'DISCHARGE' | 'HOLD';
-    power: number;
-    expectedRevenue: number;
-    confidence: number;
-  };
+  action: Action;
   explanation: string;
   modelWeights: ModelWeights;
   timestamp: string;
@@ -64,10 +53,12 @@ interface MetricsHistory {
     healthScore: number;
     averageEfficiency: number;
     cycleCount: number;
+    id?: string;
+    key?: string;
   }>;
 }
 
-interface Notification {
+interface NotificationType {
   id: string;
   message: string;
   type: 'warning' | 'error' | 'success';
@@ -81,10 +72,15 @@ interface Thresholds {
   MAX_CYCLES: number;
 }
 
-interface AIRecommendation {
-  action: string;
-  reason: string;
-  confidence: number;
+interface MetricData {
+  timestamp: string;
+  dailyRevenue?: number;
+  roi?: number;
+  healthScore?: number;
+  averageEfficiency?: number;
+  cycleCount?: number;
+  id?: string;
+  key?: string;
 }
 
 const AIAgent: React.FC<AIAgentProps> = ({
@@ -93,23 +89,18 @@ const AIAgent: React.FC<AIAgentProps> = ({
   solarIrradiance,
   temperature,
   efficiency,
+  hasAlert,
   onActionExecute,
-  autoMode = false,
-  currentState,
-  metrics: initialMetrics,
-  onExecute,
-  assetType,
-  pvData
+  autoExecuteEnabled,
+  metrics: initialMetrics
 }) => {
   const [decision, setDecision] = useState<AgentDecision | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [autoExecuteEnabled, setAutoExecuteEnabled] = useState(autoMode);
   const [lastExecutionTime, setLastExecutionTime] = useState<Date | null>(null);
   const [metricsHistory, setMetricsHistory] = useState<MetricsHistory['metrics']>([]);
   const [currentMetrics, setCurrentMetrics] = useState(initialMetrics?.metrics?.[0] || null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([]);
+  const [notifications, setNotifications] = useState<NotificationType[]>([]);
 
   // Costanti per le soglie di allarme
   const THRESHOLDS: Thresholds = {
@@ -158,8 +149,14 @@ const AIAgent: React.FC<AIAgentProps> = ({
     setError(null);
 
     try {
+      // Controllo più robusto dei dati di input
       if (!batteryCharge || !marketPrice || !temperature) {
-        throw new Error('Dati di input mancanti');
+        console.warn("Dati incompleti per fetchDecision:", { 
+          batteryCharge, 
+          marketPrice, 
+          temperature 
+        });
+        throw new Error("Dati di input mancanti o incompleti");
       }
 
       const response = await fetch('/api/ml/agent', {
@@ -219,43 +216,41 @@ const AIAgent: React.FC<AIAgentProps> = ({
   }, []);
 
   // Funzione per aggiungere ID univoci ai dati delle metriche
-  const addUniqueIdsToMetrics = useCallback((metrics: any[]) => {
+  const addUniqueIdsToMetrics = useCallback((metrics: MetricData[]): MetricsHistory['metrics'] => {
     if (!metrics || !Array.isArray(metrics) || metrics.length === 0) return [];
     
-    // Crea un timestamp base per evitare duplicazioni
     const baseTimestamp = Date.now();
     
-    // Crea un array di metriche con ID univoci
     const uniqueMetrics = metrics.map((metric, index) => {
-      // Assicurati che ogni metrica abbia un timestamp valido
       let metricTimestamp;
       try {
-        // Prova a ottenere un timestamp valido dalla metrica
         if (metric.timestamp) {
           const parsedTime = new Date(metric.timestamp).getTime();
           metricTimestamp = isNaN(parsedTime) ? 
             (baseTimestamp - (metrics.length - index) * 1000) : 
-            (parsedTime + (index * 100)); // Aggiungi un piccolo offset per garantire l'unicità
+            (parsedTime + (index * 100));
         } else {
           metricTimestamp = baseTimestamp - (metrics.length - index) * 1000;
         }
-      } catch (e) {
-        // In caso di errore, usa un timestamp calcolato
+      } catch {
         metricTimestamp = baseTimestamp - (metrics.length - index) * 1000;
       }
       
-      // Crea un ID univoco basato sull'indice e sul timestamp
       const uniqueId = `metric_${index}_${metricTimestamp}`;
       
       return {
         ...metric,
         id: uniqueId,
+        key: uniqueId,
         timestamp: new Date(metricTimestamp).toISOString(),
-        key: uniqueId
+        dailyRevenue: metric.dailyRevenue ?? 0,
+        roi: metric.roi ?? 0,
+        healthScore: metric.healthScore ?? 0,
+        averageEfficiency: metric.averageEfficiency ?? 0,
+        cycleCount: metric.cycleCount ?? 0
       };
     });
     
-    // Ordina le metriche per timestamp per evitare problemi di rendering
     return uniqueMetrics.sort((a, b) => {
       const dateA = new Date(a.timestamp).getTime();
       const dateB = new Date(b.timestamp).getTime();
@@ -297,55 +292,39 @@ const AIAgent: React.FC<AIAgentProps> = ({
 
   // Effetto per controllare le soglie e inviare notifiche
   useEffect(() => {
-    if (!currentMetrics) return;
-
     const checkThresholds = () => {
-      try {
-        if (currentMetrics.dailyRevenue !== undefined && currentMetrics.dailyRevenue < THRESHOLDS.MIN_REVENUE) {
-          addNotification(
-            `Ricavi giornalieri (${currentMetrics.dailyRevenue?.toFixed(2) || '0.00'}€) sotto la soglia minima di ${THRESHOLDS.MIN_REVENUE}€`,
-            'warning'
-          );
-        }
-        if (currentMetrics.roi !== undefined && currentMetrics.roi < THRESHOLDS.MIN_ROI) {
-          addNotification(
-            `ROI (${currentMetrics.roi?.toFixed(2) || '0.0'}x) sotto la soglia minima di ${THRESHOLDS.MIN_ROI}x`,
-            'warning'
-          );
-        }
-        if (currentMetrics.healthScore !== undefined && currentMetrics.healthScore * 100 < THRESHOLDS.MIN_HEALTH) {
-          addNotification(
-            `Salute della batteria (${(currentMetrics.healthScore * 100)?.toFixed(1) || '0.0'}%) sotto la soglia minima del ${THRESHOLDS.MIN_HEALTH}%`,
-            'error'
-          );
-        }
-        if (currentMetrics.averageEfficiency !== undefined && currentMetrics.averageEfficiency * 100 < THRESHOLDS.MIN_EFFICIENCY) {
-          addNotification(
-            `Efficienza media (${(currentMetrics.averageEfficiency * 100)?.toFixed(1) || '0.0'}%) sotto la soglia minima del ${THRESHOLDS.MIN_EFFICIENCY}%`,
-            'error'
-          );
-        }
-        if (currentMetrics.cycleCount !== undefined && currentMetrics.cycleCount > THRESHOLDS.MAX_CYCLES) {
-          addNotification(
-            `Numero di cicli (${currentMetrics.cycleCount || '0'}) sopra la soglia massima di ${THRESHOLDS.MAX_CYCLES}`,
-            'warning'
-          );
-        }
-      } catch (error) {
-        console.error('Errore nel controllo delle soglie:', error);
+      if (!currentMetrics) return;
+
+      const { efficiency, health, cycle_count } = currentMetrics;
+      const { revenue_today, roi_percent } = currentMetrics;
+
+      if (efficiency && efficiency < THRESHOLDS.MIN_EFFICIENCY) {
+        addNotification(`Efficienza sotto la soglia (${THRESHOLDS.MIN_EFFICIENCY}%)`, 'warning');
+      }
+      if (health && health < THRESHOLDS.MIN_HEALTH) {
+        addNotification(`Salute batteria sotto la soglia (${THRESHOLDS.MIN_HEALTH}%)`, 'warning');
+      }
+      if (cycle_count && cycle_count > THRESHOLDS.MAX_CYCLES) {
+        addNotification(`Cicli sopra la soglia (${THRESHOLDS.MAX_CYCLES})`, 'warning');
+      }
+      if (revenue_today && revenue_today < THRESHOLDS.MIN_REVENUE) {
+        addNotification(`Ricavi sotto la soglia (${THRESHOLDS.MIN_REVENUE}€)`, 'warning');
+      }
+      if (roi_percent && roi_percent < THRESHOLDS.MIN_ROI) {
+        addNotification(`ROI sotto la soglia (${THRESHOLDS.MIN_ROI}%)`, 'warning');
       }
     };
 
     checkThresholds();
-  }, [currentMetrics, THRESHOLDS.MIN_REVENUE, THRESHOLDS.MIN_ROI, THRESHOLDS.MIN_HEALTH, THRESHOLDS.MIN_EFFICIENCY, THRESHOLDS.MAX_CYCLES, addNotification]);
+  }, [currentMetrics, THRESHOLDS.MIN_EFFICIENCY, THRESHOLDS.MIN_HEALTH, THRESHOLDS.MAX_CYCLES, THRESHOLDS.MIN_REVENUE, THRESHOLDS.MIN_ROI, addNotification]);
 
   // Custom Tooltip per i grafici
-  const CustomTooltip = ({ active, payload, label, thresholds }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
     if (!active || !payload || !payload.length || !payload[0]) {
       return null;
     }
     
-    const data = payload[0].payload;
+    const data = payload[0].payload as MetricData;
     const metric = payload[0].dataKey;
     
     if (!data || !metric) {
@@ -354,13 +333,12 @@ const AIAgent: React.FC<AIAgentProps> = ({
     
     let threshold = 0;
     let message = '';
-    let value = data[metric];
+    const value = data[metric as keyof MetricData];
     
-    // Se il valore è undefined o null, mostra un messaggio appropriato
-    if (value === undefined || value === null) {
+    if (typeof value !== 'number') {
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-          <p className="text-gray-600">{formatTimestamp(label)}</p>
+          <p className="text-gray-600">{formatTimestamp(label || '')}</p>
           <p className="font-semibold">{payload[0].name}: Dato non disponibile</p>
         </div>
       );
@@ -395,9 +373,9 @@ const AIAgent: React.FC<AIAgentProps> = ({
 
     return (
       <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-        <p className="text-gray-600">{formatTimestamp(label)}</p>
+        <p className="text-gray-600">{formatTimestamp(label || '')}</p>
         <p className="font-semibold">
-          {payload[0].name}: {value?.toFixed(2) || '0.00'}
+          {payload[0].name}: {value.toFixed(2)}
           {metric.includes('Score') || metric.includes('Efficiency') ? '%' : ''}
         </p>
         <p className={isBelow ? 'text-red-500' : 'text-green-500'}>
@@ -446,33 +424,30 @@ const AIAgent: React.FC<AIAgentProps> = ({
 
   useEffect(() => {
     const checkThresholds = () => {
-      if (!currentState?.bess?.data) return;
+      if (!currentMetrics) return;
 
-      const warnings = [];
-      const { efficiency, health, cycle_count } = currentState.bess.data;
-      const { revenue_today, roi_percent } = currentState.bess.data;
+      const { efficiency, health, cycle_count } = currentMetrics;
+      const { revenue_today, roi_percent } = currentMetrics;
 
       if (efficiency && efficiency < THRESHOLDS.MIN_EFFICIENCY) {
-        warnings.push(`Efficienza sotto la soglia (${THRESHOLDS.MIN_EFFICIENCY}%)`);
+        addNotification(`Efficienza sotto la soglia (${THRESHOLDS.MIN_EFFICIENCY}%)`, 'warning');
       }
       if (health && health < THRESHOLDS.MIN_HEALTH) {
-        warnings.push(`Salute batteria sotto la soglia (${THRESHOLDS.MIN_HEALTH}%)`);
+        addNotification(`Salute batteria sotto la soglia (${THRESHOLDS.MIN_HEALTH}%)`, 'warning');
       }
       if (cycle_count && cycle_count > THRESHOLDS.MAX_CYCLES) {
-        warnings.push(`Cicli sopra la soglia (${THRESHOLDS.MAX_CYCLES})`);
+        addNotification(`Cicli sopra la soglia (${THRESHOLDS.MAX_CYCLES})`, 'warning');
       }
       if (revenue_today && revenue_today < THRESHOLDS.MIN_REVENUE) {
-        warnings.push(`Ricavi sotto la soglia (${THRESHOLDS.MIN_REVENUE}€)`);
+        addNotification(`Ricavi sotto la soglia (${THRESHOLDS.MIN_REVENUE}€)`, 'warning');
       }
       if (roi_percent && roi_percent < THRESHOLDS.MIN_ROI) {
-        warnings.push(`ROI sotto la soglia (${THRESHOLDS.MIN_ROI}%)`);
+        addNotification(`ROI sotto la soglia (${THRESHOLDS.MIN_ROI}%)`, 'warning');
       }
-
-      setWarnings(warnings);
     };
 
     checkThresholds();
-  }, [currentState, THRESHOLDS.MIN_EFFICIENCY, THRESHOLDS.MIN_HEALTH, THRESHOLDS.MAX_CYCLES, THRESHOLDS.MIN_REVENUE, THRESHOLDS.MIN_ROI]);
+  }, [currentMetrics, THRESHOLDS.MIN_EFFICIENCY, THRESHOLDS.MIN_HEALTH, THRESHOLDS.MAX_CYCLES, THRESHOLDS.MIN_REVENUE, THRESHOLDS.MIN_ROI, addNotification]);
 
   const handleManualExecute = () => {
     try {
@@ -520,13 +495,32 @@ const AIAgent: React.FC<AIAgentProps> = ({
     }
   };
 
+  const handleAutoExecuteChange = () => {
+    if (onActionExecute) {
+      // Notifichiamo il parent se necessario
+    }
+  };
+
+  const executeAction = useCallback((action: Action) => {
+    if (onActionExecute && !isLoading) {
+      onActionExecute(action);
+      setLastExecutionTime(new Date());
+    }
+  }, [onActionExecute, isLoading]);
+
+  useEffect(() => {
+    if (hasAlert) {
+      // Logica per mostrare un indicatore di allarme
+    }
+  }, [hasAlert]);
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Agente AI</h2>
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => setAutoExecuteEnabled(!autoExecuteEnabled)}
+            onClick={handleAutoExecuteChange}
             className={`px-4 py-2 rounded-lg ${
               autoExecuteEnabled 
                 ? 'bg-green-500 text-white' 
@@ -676,7 +670,7 @@ const AIAgent: React.FC<AIAgentProps> = ({
                   />
                   <YAxis yAxisId="left" />
                   <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip content={(props) => <CustomTooltip {...props} />} />
+                  <Tooltip content={CustomTooltip} />
                   <Legend />
                   <ReferenceArea
                     yAxisId="left"
@@ -744,7 +738,7 @@ const AIAgent: React.FC<AIAgentProps> = ({
                     interval="preserveStartEnd"
                   />
                   <YAxis domain={[0, 100]} />
-                  <Tooltip content={(props) => <CustomTooltip {...props} />} />
+                  <Tooltip content={CustomTooltip} />
                   <Legend />
                   <ReferenceArea
                     y1={0}
@@ -806,7 +800,7 @@ const AIAgent: React.FC<AIAgentProps> = ({
                     interval="preserveStartEnd"
                   />
                   <YAxis />
-                  <Tooltip content={(props) => <CustomTooltip {...props} />} />
+                  <Tooltip content={CustomTooltip} />
                   <Legend />
                   <ReferenceArea
                     y1={THRESHOLDS.MAX_CYCLES}

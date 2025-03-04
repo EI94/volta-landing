@@ -3,9 +3,24 @@ import { z } from 'zod';
 // Schema per i dati del mercato dell'energia
 export const EnergyMarketSchema = z.object({
   timestamp: z.string().datetime(),
-  price: z.number().min(0).max(1000),
-  demand: z.number().min(0).max(10000),
-  renewable_percentage: z.number().min(0).max(100)
+  currentPrice: z.number().min(0).max(1000),
+  dayAheadPrice: z.number().min(0).max(1000),
+  volume: z.number().min(0),
+  marketTrend: z.enum(['up', 'down', 'stable']),
+  volatilityIndex: z.number().min(0).max(1),
+  peakHourPrice: z.number().min(0).max(1000),
+  offPeakPrice: z.number().min(0).max(1000),
+  renewablePercentage: z.number().min(0).max(100),
+  demandForecast: z.number().min(0),
+  supplyForecast: z.number().min(0),
+  congestionZones: z.object({
+    north: z.number().min(0).max(1000),
+    central: z.number().min(0).max(1000),
+    south: z.number().min(0).max(1000),
+    islands: z.number().min(0).max(1000)
+  }),
+  tradingVolume: z.number().min(0),
+  lastUpdate: z.string().datetime()
 });
 
 // Schema per i dati meteo

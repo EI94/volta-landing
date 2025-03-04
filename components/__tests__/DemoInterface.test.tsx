@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import DemoInterface from '../DemoInterface';
 
 interface MockResponse {
-  currentState: {
+  currentState?: {
     bess: {
       data: {
         currentChargePercent: number;
@@ -14,13 +14,14 @@ interface MockResponse {
       };
       status: { warnings: string[] };
     };
-    market: { currentPrice: number };
-    weather: { solarIrradiance: number };
+    market?: { currentPrice: number };
+    weather?: { solarIrradiance: number };
   };
-  ai: {
+  ai?: {
     recommendations: Record<string, unknown>;
     chargeSchedule: unknown[];
   };
+  error?: string;
 }
 
 // Mock delle funzioni fetch

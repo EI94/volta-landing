@@ -1,42 +1,59 @@
-import { Redis } from '@upstash/redis';
+import redisClient, { isRedisEnabled } from './redis';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || ''
-});
+// Durata predefinita della cache in secondi (10 minuti)
+const DEFAULT_CACHE_DURATION = 600;
 
-interface CacheConfig {
-  ttl: number;  // Tempo di vita del cache in secondi
-}
-
-const DEFAULT_CONFIG: CacheConfig = {
-  ttl: 300     // 5 minuti di default
-};
-
+/**
+ * Cache dei dati utilizzando Redis
+ * 
+ * Se Redis è disabilitato, esegue la funzione di recupero dati senza caching
+ * 
+ * @param key Chiave per la cache
+ * @param fetchData Funzione per recuperare i dati se non sono in cache
+ * @param ttl Tempo di vita della cache in secondi (default: 10 minuti)
+ * @returns I dati recuperati (dalla cache o dalla funzione fetchData)
+ */
 export async function cacheData<T>(
   key: string,
-  getData: () => Promise<T>,
-  config: CacheConfig = DEFAULT_CONFIG
+  fetchData: () => Promise<T>,
+  ttl: number = DEFAULT_CACHE_DURATION
 ): Promise<T> {
+  // Se Redis è disabilitato, esegui direttamente la funzione
+  if (!isRedisEnabled) {
+    return fetchData();
+  }
+  
+  // Prova a recuperare dal cache
   try {
-    // Prova a recuperare dal cache
-    const cachedData = await redis.get<T>(key);
+    const cachedData = await redisClient.get<T>(key);
+    
     if (cachedData) {
-      console.log(`Cache hit per ${key}`);
+      console.log(`[Cache] Hit per ${key}`);
       return cachedData;
     }
-
-    // Se non presente nel cache, recupera i dati freschi
-    console.log(`Cache miss per ${key}`);
-    const freshData = await getData();
+  } catch (readError) {
+    console.error(`[Cache] Errore nella lettura della cache per ${key}:`, readError);
+    // Prosegui con il recupero dei dati freschi
+  }
+  
+  console.log(`[Cache] Miss per ${key}, recupero dati freschi`);
+  
+  // Recupera i dati attraverso la funzione
+  try {
+    const data = await fetchData();
     
-    // Salva nel cache con TTL
-    await redis.setex(key, config.ttl, freshData);
+    // Prova a salvare in cache
+    try {
+      await redisClient.set(key, data, { ex: ttl });
+      console.log(`[Cache] Dati salvati in cache per ${key} (TTL: ${ttl}s)`);
+    } catch (writeError) {
+      console.error(`[Cache] Errore nel salvataggio in cache per ${key}:`, writeError);
+      // Prosegui restituendo i dati recuperati
+    }
     
-    return freshData;
-  } catch (error) {
-    console.error(`Errore nel caching per ${key}:`, error);
-    // In caso di errore del cache, recupera i dati freschi
-    return getData();
+    return data;
+  } catch (fetchError) {
+    console.error(`[Cache] Errore nel recupero dei dati per ${key}:`, fetchError);
+    throw fetchError; // Propaga l'errore di recupero dati
   }
 } 

@@ -149,6 +149,41 @@ interface Notification {
   timestamp: Date;
 }
 
+// Aggiungo le interfacce mancanti all'inizio del file dopo le interfacce esistenti
+interface Action {
+  type: string;
+  power: number;
+  expectedRevenue: number;
+  confidence: number;
+}
+
+interface CurrentStream {
+  type: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  description: string;
+  estimatedAnnualRevenue: number;
+  suitabilityScore: number;
+}
+
+interface RecommendationItem {
+  type: string;
+  power: number;
+  expectedRevenue: number;
+  confidence: number;
+  explanation: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  description: string;
+  reason: string;
+  estimatedAnnualRevenue: number;
+  suitabilityScore: number;
+}
+
+interface RevenueAdvice {
+  currentStream: CurrentStream;
+  recommendations: RecommendationItem[];
+  marketInsights: string[];
+}
+
 // Memoizzazione dei componenti che non necessitano di frequenti ri-render
 const MemoizedMultiSiteSelector = React.memo(MultiSiteSelector);
 const MemoizedEnergyMarketDashboard = React.memo(EnergyMarketDashboard);
@@ -192,27 +227,6 @@ const metricColors = {
   powerOutput_siteB: '#64B5F6',
   revenue_siteA: '#FFC107',
   revenue_siteB: '#FFD54F'
-};
-
-// Funzione per generare dati storici per i grafici
-const generateHistoricalData = (hours: number) => {
-  const data = [];
-  const now = new Date();
-  
-  for (let i = 0; i < hours; i++) {
-    const timestamp = new Date(now.getTime() - (hours - i) * 60 * 60 * 1000);
-    data.push({
-      timestamp: timestamp.toISOString(),
-      dailyRevenue: Math.random() * 1000 + 500,
-      roi: Math.random() * 10 + 5,
-      healthScore: Math.random() * 10 + 85,
-      averageEfficiency: Math.random() * 15 + 80,
-      cycleCount: Math.floor(Math.random() * 5) + i,
-      id: `metric_${timestamp.getTime()}`
-    });
-  }
-  
-  return data;
 };
 
 // Definisce un componente Tab per il sistema di navigazione a schede
@@ -292,24 +306,69 @@ const Card = ({
   );
 };
 
+interface KPICardProps {
+  title: string;
+  value: number | string;
+  unit?: string;
+  onClick?: () => void;
+  clickable?: boolean;
+  icon?: React.ReactNode;
+}
+
 // Componente per i KPI
-const KPICard = ({ title, value, unit, onClick, clickable = false, icon = null }: any) => (
+const KPICard = ({ title, value, unit, onClick, clickable = false, icon = null }: KPICardProps) => (
   <div 
     className={`bg-blue-50 p-4 rounded-lg ${clickable ? 'cursor-pointer hover:bg-blue-100' : ''}`}
     onClick={clickable ? onClick : undefined}
   >
-    <div className="text-center">
-      <div className="flex items-center justify-center mb-2">
-        {icon && <span className="mr-2 text-xl">{icon}</span>}
-        <p className="text-lg font-semibold">{title}</p>
+    <div className="flex justify-between items-center">
+      <div>
+        <div className="text-sm text-gray-600">{title}</div>
+        <div className="text-lg font-semibold">
+          {value} {unit}
+        </div>
       </div>
-      <p className="text-2xl font-bold text-blue-600">{value}{unit}</p>
-      {clickable && (
-        <p className="text-sm text-gray-600 mt-1">Click per dettagli</p>
-      )}
+      {icon && <div className="text-2xl">{icon}</div>}
     </div>
   </div>
 );
+
+interface HistoryEntry {
+  timestamp: string;
+  value: number;
+  type: string;
+}
+
+interface ProductionScheduleItem {
+  timestamp: Date;
+  expectedPower: number;
+  solarIrradiance?: number;
+  cloudCover?: number;
+  expectedPrice: number;
+  confidence: number;
+}
+
+// Funzione che genera dati storici di esempio quando mancano dati reali
+const generateHistoricalData = (numPoints: number) => {
+  const result = [];
+  const now = new Date();
+  
+  for (let i = 0; i < numPoints; i++) {
+    const timestamp = new Date(now.getTime() - (numPoints - i) * 3600 * 1000);
+    result.push({
+      timestamp: timestamp.toISOString(),
+      dailyRevenue: 50 + Math.random() * 100,
+      roi: 5 + Math.random() * 15,
+      healthScore: 75 + Math.random() * 25,
+      averageEfficiency: 80 + Math.random() * 20,
+      cycleCount: Math.floor(10 + Math.random() * 50),
+      id: `metric-${timestamp.getTime()}`,
+      key: `key-${timestamp.getTime()}`
+    });
+  }
+  
+  return result;
+};
 
 export default function DemoInterface(): JSX.Element {
   const [selectedSite, setSelectedSite] = useState<string>("siteA");
@@ -319,12 +378,7 @@ export default function DemoInterface(): JSX.Element {
   const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [bessHistory, setBessHistory] = useState<Array<{
-    timestamp: Date;
-    chargePercent: number;
-    healthPercent: number;
-    temperature: number;
-  }>>([]);
+  const [bessHistory, setBessHistory] = useState<Array<HistoryEntry>>([]);
   const [timeRange, setTimeRange] = useState<string>('24h');
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['efficiency', 'chargeLevel']);
   const [comparisonData, setComparisonData] = useState<Array<{
@@ -343,12 +397,15 @@ export default function DemoInterface(): JSX.Element {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   
   // Nuovi stati per il controllo delle sezioni espandibili
-  const [showAIAgent, setShowAIAgent] = useState<boolean>(false);
-  const [showBessDetails, setShowBessDetails] = useState<boolean>(true);
-  const [showRevenueAdvisor, setShowRevenueAdvisor] = useState<boolean>(false);
+  // const [showAIAgent, setShowAIAgent] = useState<boolean>(false);
+  // const [showBessDetails, setShowBessDetails] = useState<boolean>(true);
+  // const [showRevenueAdvisor, setShowRevenueAdvisor] = useState<boolean>(false);
   
   // Nuovo stato per memorizzare i consigli di revenue
-  const [revenueAdvice, setRevenueAdvice] = useState<any>(null);
+  const [revenueAdvice, setRevenueAdvice] = useState<RevenueAdvice | null>(null);
+
+  // Aggiungo lo stato per autoExecuteEnabled
+  const [autoExecuteEnabled, setAutoExecuteEnabled] = useState<boolean>(false);
 
   // Memoizzazione dei dati formattati per evitare ricalcoli non necessari
   const formattedBessData = useMemo(() => {
@@ -403,7 +460,7 @@ export default function DemoInterface(): JSX.Element {
   }, []);
 
   // Funzione per aggiungere una notifica
-  const addNotification = useCallback((type: Notification['type'], message: string) => {
+  const addNotification = useCallback((type: 'success' | 'warning' | 'error' | 'info', message: string) => {
     const newNotification: Notification = {
       id: Date.now().toString(),
       type,
@@ -626,29 +683,27 @@ export default function DemoInterface(): JSX.Element {
       if (simulationData.currentState.assetType === 'bess' && simulationData.currentState.bess) {
         const bessData = simulationData.currentState.bess.data;
         const newEntry = {
-          timestamp: new Date(),
-          chargePercent: bessData.currentChargePercent,
-          healthPercent: bessData.batteryHealthPercent,
-          temperature: bessData.temperatureC
+          timestamp: new Date().toISOString(),
+          value: bessData.currentChargePercent,
+          type: 'chargePercent'
         };
         
         setBessHistory(prev => {
-          const updatedHistory = [...prev, newEntry];
+          const updatedHistory = [...prev, newEntry as HistoryEntry];
           return updatedHistory.slice(-48);
         });
       } else if (simulationData.currentState.assetType === 'pv' && simulationData.currentState.pv) {
         const pvData = simulationData.currentState.pv.data;
         // Per il fotovoltaico, memorizziamo l'output e il performance ratio
         const newEntry = {
-          timestamp: new Date(),
-          outputMW: pvData.actualOutputMW,
-          performanceRatio: pvData.performanceRatio * 100,
-          temperature: pvData.temperatureC
+          timestamp: new Date().toISOString(),
+          value: pvData.actualOutputMW,
+          type: 'outputMW'
         };
         
         // Riutilizziamo lo stesso stato per la semplicità
         setBessHistory(prev => {
-          const updatedHistory = [...prev, newEntry as any];
+          const updatedHistory = [...prev, newEntry as HistoryEntry];
           return updatedHistory.slice(-48);
         });
       }
@@ -681,29 +736,20 @@ export default function DemoInterface(): JSX.Element {
     };
   }, [simulationData?.forecasts]);
 
-  // Memoizzazione delle condizioni di visualizzazione
-  const displayConditions = useMemo(() => {
-    if (!simulationData) return null;
-    
-    // Utilizzo di !! per convertire i valori potenzialmente undefined in booleani
-    const hasWarnings = simulationData.currentState.assetType === 'bess' && 
-      !!(simulationData.currentState.bess?.status?.warnings?.length);
-    
-    const hasChargeSchedule = Array.isArray(simulationData.ai.chargeSchedule) && 
-      simulationData.ai.chargeSchedule.length > 0;
-    
-    return {
-      hasWarnings,
-      needsMaintenance: simulationData.ai.recommendations.maintenanceNeeded,
-      hasExplanation: Boolean(simulationData.ai.recommendations.explanation),
-      hasChargeSchedule
-    };
-  }, [simulationData]);
-
   // Memoizzazione della città selezionata per il meteo
   const selectedCity = useMemo(() => 
     selectedSite === "siteA" ? "Viterbo,IT" : "Rome,IT"
   , [selectedSite]);
+
+  // Modifico la funzione handleActionExecute
+  const handleActionExecute = useCallback((action: Action) => {
+    addNotification('success', `Azione ${action.type} eseguita con successo`);
+  }, [addNotification]);
+
+  // Aggiungo la funzione per gestire l'auto-execute
+  const toggleAutoExecute = useCallback(() => {
+    setAutoExecuteEnabled(prev => !prev);
+  }, []);
 
   if (!simulationData) {
     return (
@@ -737,23 +783,31 @@ export default function DemoInterface(): JSX.Element {
               <span className="ml-3 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                 {selectedSite === "siteA" ? "Sito Viterbo" : "Sito Roma"}
               </span>
-            </div>
+        </div>
             <div className="flex space-x-3">
               <MemoizedMultiSiteSelector onSelect={handleSiteSelect} />
-              <button
+            <button
                 onClick={toggleAutoRefresh}
                 className={`px-4 py-2 rounded-lg ${
                   autoRefresh ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
                 }`}
               >
                 {autoRefresh ? '🔄 Aggiornamento Attivo' : '🔄 Aggiorna Auto'}
-              </button>
-              <button
+            </button>
+            <button
                 onClick={toggleFullscreen}
                 className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
               >
                 {isFullscreen ? '🔙 Esci' : '📋 Full Screen'}
-              </button>
+            </button>
+            <button
+              onClick={toggleAutoExecute}
+              className={`px-4 py-2 rounded-lg ${
+                autoExecuteEnabled ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              {autoExecuteEnabled ? '🔄 Auto ON' : '🔄 Auto OFF'}
+            </button>
             </div>
           </div>
         </header>
@@ -772,7 +826,7 @@ export default function DemoInterface(): JSX.Element {
               label="Agente AI"
               icon="🤖"
               onClick={() => setActiveTab('ai')}
-              hasAlert={hasAlerts}
+              hasAlert={hasAlerts || undefined}
             />
             <Tab 
               active={activeTab === 'analysis'} 
@@ -785,7 +839,7 @@ export default function DemoInterface(): JSX.Element {
               label="Revenue Advisor"
               icon="💰"
               onClick={() => setActiveTab('revenue')}
-              hasAlert={hasRevenueAdvice}
+              hasAlert={hasRevenueAdvice || undefined}
             />
           </div>
         </div>
@@ -818,7 +872,7 @@ export default function DemoInterface(): JSX.Element {
                         />
                         <KPICard 
                           title="Cicli" 
-                          value={formattedBessData?.cycleCount} 
+                          value={Number(formattedBessData?.cycleCount) || 0} 
                           icon="🔄"
                         />
                       </>
@@ -905,7 +959,11 @@ export default function DemoInterface(): JSX.Element {
                 <Card title={simulationData.currentState.assetType === 'bess' ? "Storico Stato Batteria" : "Storico Produzione"}>
                   {bessHistory.length > 0 ? (
                     <MemoizedBessStateChart 
-                      data={bessHistory} 
+                      data={bessHistory.map(entry => ({
+                        timestamp: new Date(entry.timestamp),
+                        chargePercent: entry.type === 'chargePercent' ? entry.value : undefined,
+                        outputMW: entry.type === 'outputMW' ? entry.value : undefined
+                      }))} 
                       assetType={simulationData.currentState.assetType}
                     />
                   ) : (
@@ -944,7 +1002,7 @@ export default function DemoInterface(): JSX.Element {
                 <div className="mt-6">
                   <Card title="Previsione Produzione">
                     <MemoizedPvProductionTable 
-                      schedule={simulationData.ai.productionSchedule.map((item: any) => ({
+                      schedule={simulationData.ai.productionSchedule.map((item: ProductionScheduleItem) => ({
                         timestamp: item.timestamp,
                         expectedPower: item.expectedPower,
                         solarIrradiance: item.solarIrradiance,
@@ -953,7 +1011,7 @@ export default function DemoInterface(): JSX.Element {
                       }))} 
                     />
                   </Card>
-                </div>
+              </div>
               )}
             </div>
           )}
@@ -965,62 +1023,27 @@ export default function DemoInterface(): JSX.Element {
                 title="Assistente AI per l'Ottimizzazione Energetica" 
                 collapsible={false}
               >
-                {simulationData && (
-                  <AIAgent
-                    batteryCharge={simulationData.currentState.assetType === 'bess' && simulationData.currentState.bess
-                      ? simulationData.currentState.bess.data.currentChargePercent
-                      : 0}
-                    marketPrice={simulationData.currentState.market.currentPrice}
-                    solarIrradiance={simulationData.currentState.weather.solarIrradiance}
-                    temperature={simulationData.currentState.assetType === 'bess' && simulationData.currentState.bess
-                      ? simulationData.currentState.bess.data.temperatureC
-                      : simulationData.currentState.assetType === 'pv' && simulationData.currentState.pv
-                        ? simulationData.currentState.pv.data.temperatureC
-                        : 0}
-                    efficiency={simulationData.currentState.assetType === 'bess' && simulationData.currentState.bess
-                      ? simulationData.currentState.bess.data.efficiency * 100
-                      : simulationData.currentState.assetType === 'pv' && simulationData.currentState.pv
-                        ? simulationData.currentState.pv.data.currentEfficiency
-                        : 0}
-                    assetType={simulationData.currentState.assetType}
-                    pvData={simulationData.currentState.assetType === 'pv' && simulationData.currentState.pv
-                      ? {
-                          actualOutputMW: simulationData.currentState.pv.data.actualOutputMW,
-                          expectedOutputMW: simulationData.currentState.pv.data.expectedOutputMW,
-                          performanceRatio: simulationData.currentState.pv.data.performanceRatio,
-                          specificYield: simulationData.currentState.pv.data.specificYield,
-                          soilingRatio: simulationData.currentState.pv.data.soilingRatio,
-                          inverterEfficiency: simulationData.currentState.pv.data.inverterEfficiency / 100,
-                          moduleHealth: simulationData.currentState.pv.data.moduleHealth
-                        }
-                      : undefined}
-                    currentState={simulationData.currentState.assetType === 'bess' && simulationData.currentState.bess 
-                      ? {
-                          bess: {
-                            data: {
-                              efficiency: simulationData.currentState.bess.data.efficiency * 100,
-                              health: simulationData.currentState.bess.data.batteryHealthPercent,
-                              cycle_count: simulationData.currentState.bess.data.cycleCount,
-                              revenue_today: simulationData.currentState.bess.data.revenueToday || 0,
-                              roi_percent: simulationData.currentState.bess.data.roiPercent || 0
-                            }
-                          }
-                        } 
-                      : undefined}
-                    metrics={{
-                      metrics: generateHistoricalData(24)
-                    }}
-                    onExecute={() => {
-                      console.log('Esecuzione automatica');
-                    }}
-                    onActionExecute={(action) => {
-                      // Aggiungi una notifica per l'azione eseguita
-                      addNotification(
-                        'info',
-                        `Azione eseguita: ${action.type} a ${action.power.toFixed(2)} MW`
-                      );
-                    }}
-                  />
+                {simulationData ? (
+                  <div className="flex-grow">
+                    <AIAgent
+                      batteryCharge={simulationData.currentState?.bess?.data?.currentChargePercent ?? 50}
+                      marketPrice={simulationData.currentState?.market?.currentPrice ?? 100}
+                      solarIrradiance={simulationData.currentState?.weather?.solarIrradiance ?? 0}
+                      temperature={simulationData.currentState?.bess?.data?.temperatureC ?? 25}
+                      efficiency={simulationData.currentState?.bess?.data?.efficiency ?? 90}
+                      hasAlert={simulationData.currentState?.bess?.status?.warnings && 
+                                simulationData.currentState.bess.status.warnings.length > 0}
+                      onActionExecute={handleActionExecute}
+                      autoExecuteEnabled={autoExecuteEnabled}
+                      metrics={{
+                        metrics: generateHistoricalData(24)
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-grow flex items-center justify-center">
+                    <p className="text-gray-500">Dati di simulazione non disponibili</p>
+                  </div>
                 )}
               </Card>
               
@@ -1159,13 +1182,13 @@ export default function DemoInterface(): JSX.Element {
                           </div>
                         </div>
                       </div>
-                    </div>
-                    
+        </div>
+
                     {/* Raccomandazioni Alternative */}
                     <div>
                       <h4 className="text-xl font-semibold mb-3">Raccomandazioni Alternative</h4>
                       <div className="space-y-4">
-                        {revenueAdvice.recommendations.map((rec: any, index: number) => (
+                        {revenueAdvice.recommendations.map((rec: RecommendationItem, index: number) => (
                           <div 
                             key={`rec-${index}`} 
                             className={`p-4 rounded-lg ${
@@ -1216,11 +1239,11 @@ export default function DemoInterface(): JSX.Element {
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+            </div>
+          ))}
                       </div>
-                    </div>
-                    
+        </div>
+
                     {/* Approfondimenti sul mercato */}
                     <div className="mt-6">
                       <h4 className="text-xl font-semibold mb-3">Approfondimenti sul Mercato</h4>
@@ -1243,10 +1266,10 @@ export default function DemoInterface(): JSX.Element {
                   </div>
                 )}
               </Card>
-            </div>
+        </div>
           )}
         </main>
-      </div>
+    </div>
 
       {/* Sistema di Notifiche */}
       <NotificationSystem

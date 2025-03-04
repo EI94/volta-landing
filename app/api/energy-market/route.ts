@@ -4,6 +4,7 @@ import { rateLimiter } from '@/lib/rate-limiter';
 import { cacheData } from '@/lib/cache';
 import { logger } from '@/lib/logger';
 import { metrics } from '@/lib/metrics';
+import { fetchMarketStatus } from '@/lib/marketData';
 import type { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -14,31 +15,23 @@ export async function GET(request: NextRequest) {
     if (!rateLimitResult.success) {
       const error = new Error('Troppe richieste. Riprova più tardi.');
       await logger.logRequest(request, 429, startTime, error);
-      await metrics.recordRequest(429, performance.now() - startTime);
-      return NextResponse.json(
-        { error: error.message },
-        { status: 429 }
+      await metrics.recordRequest(
+        'GET', 
+        request.url, 
+        429, 
+        performance.now() - startTime, 
+        request.headers.get('x-forwarded-for') || 'anonymous',
+        request.headers.get('user-agent') || 'unknown'
       );
+      return rateLimitResult.response;
     }
 
-    // Recupera i dati dal cache o genera nuovi dati
+    // Recupera i dati dal cache o chiama l'API
+    const cacheKey = 'energy-market-status';
     const data = await cacheData(
-      'energy-market:current',
-      async () => {
-        const now = new Date();
-        return {
-          timestamp: now.toISOString(),
-          price: 50 + Math.random() * 100, // €/MWh
-          demand: 1000 + Math.random() * 5000, // MW
-          renewable_percentage: Math.random() * 100, // %
-          trend: Math.random() > 0.5 ? 'up' : 'down',
-          forecast: Array.from({ length: 24 }, (_, i) => ({
-            timestamp: new Date(now.getTime() + i * 3600000).toISOString(),
-            price: 50 + Math.random() * 100,
-          })),
-        };
-      },
-      { ttl: 300 } // Cache per 5 minuti
+      cacheKey,
+      async () => fetchMarketStatus(),
+      3600 // Cache per 1 ora
     );
 
     // Valida i dati
@@ -46,7 +39,14 @@ export async function GET(request: NextRequest) {
     
     // Log e metriche della richiesta riuscita
     await logger.logRequest(request, 200, startTime);
-    await metrics.recordRequest(200, performance.now() - startTime);
+    await metrics.recordRequest(
+      'GET', 
+      request.url, 
+      200, 
+      performance.now() - startTime, 
+      request.headers.get('x-forwarded-for') || 'anonymous',
+      request.headers.get('user-agent') || 'unknown'
+    );
     
     return NextResponse.json(validatedData);
   } catch (error) {
@@ -54,7 +54,14 @@ export async function GET(request: NextRequest) {
     
     // Log e metriche dell'errore
     await logger.logRequest(request, 500, startTime, error as Error);
-    await metrics.recordRequest(500, performance.now() - startTime);
+    await metrics.recordRequest(
+      'GET', 
+      request.url, 
+      500, 
+      performance.now() - startTime, 
+      request.headers.get('x-forwarded-for') || 'anonymous',
+      request.headers.get('user-agent') || 'unknown'
+    );
     
     return NextResponse.json(
       { error: 'Errore nel recupero dei dati del mercato' },

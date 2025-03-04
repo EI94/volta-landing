@@ -13,7 +13,7 @@ export interface BaseFormData {
 }
 
 // Definizione corretta per i flussi di ricavi
-export type RevenueStreamType = 'ppa' | 'tolling' | 'merchant' | 'capacityMarket' | 'macse';
+export type RevenueStreamType = 'PPA' | 'TOLLING' | 'MERCHANT' | 'CM' | 'MACSE';
 
 // Base per tutti i flussi di ricavi
 export interface BaseRevenueStream {
@@ -22,7 +22,7 @@ export interface BaseRevenueStream {
 
 // PPA Revenue Stream
 export interface PPARevenueStream extends BaseRevenueStream {
-  type: 'ppa';
+  type: 'PPA';
   counterparty: string;
   contractDuration: number;
   priceType: string;
@@ -39,7 +39,7 @@ export interface PPARevenueStream extends BaseRevenueStream {
 
 // Tolling Revenue Stream
 export interface TollingRevenueStream extends BaseRevenueStream {
-  type: 'tolling';
+  type: 'TOLLING';
   counterparty: string;
   operator?: string;
   contractDuration: number;
@@ -53,7 +53,7 @@ export interface TollingRevenueStream extends BaseRevenueStream {
 
 // Capacity Market Revenue Stream
 export interface CapacityMarketRevenueStream extends BaseRevenueStream {
-  type: 'capacityMarket';
+  type: 'CM';
   counterparty: string;
   contractDuration: number;
   capacityVolume: number;
@@ -63,7 +63,7 @@ export interface CapacityMarketRevenueStream extends BaseRevenueStream {
 
 // MACSE Revenue Stream
 export interface MACSeRevenueStream extends BaseRevenueStream {
-  type: 'macse';
+  type: 'MACSE';
   counterparty: string;
   contractDuration: number;
   macseServiceType: string;
@@ -72,7 +72,7 @@ export interface MACSeRevenueStream extends BaseRevenueStream {
 
 // Merchant Revenue Stream
 export interface MerchantRevenueStream extends BaseRevenueStream {
-  type: 'merchant';
+  type: 'MERCHANT';
   estimatedRevenue: number;
   strategy?: string;
   mgp?: boolean;
@@ -101,6 +101,12 @@ export interface PVFormData extends BaseFormData {
   ppaIndexType?: string;
   ppaGuaranteedVolume?: string | number;
   ppaFlexibilityClauses?: string;
+  
+  // Campi MACSE
+  macseCounterparty?: string;
+  macseContractDuration?: string | number;
+  macseServiceType?: string;
+  macseMinPrice?: string | number;
   
   // Campi Tolling
   tollingOperator?: string;

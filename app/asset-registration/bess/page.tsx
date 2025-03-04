@@ -2,22 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   Box, Container, Typography, Button, Paper, Grid, TextField, 
   FormControlLabel, Switch, MenuItem, InputAdornment, Stepper,
-  Step, StepLabel, StepContent, Alert, Divider
+  Step, StepLabel, StepContent, Alert, Divider, FormControl, FormLabel, RadioGroup, Radio
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
-import { 
-  BESSFormData, 
-  RevenueStreamType, 
-  RevenueStreamData, 
-  TollingRevenueStream, 
-  CapacityMarketRevenueStream, 
-  MACSeRevenueStream, 
-  MerchantRevenueStream 
-} from '../types';
+import { BESSFormData, TollingRevenueStream, MerchantRevenueStream, MACSeRevenueStream, CapacityMarketRevenueStream } from '../types';
 
 // Componente per l'inserimento delle caratteristiche tecniche del BESS
 const TechnicalForm = ({ formData, setFormData }: { formData: BESSFormData, setFormData: (data: BESSFormData) => void }) => {
@@ -227,15 +219,18 @@ const TechnicalForm = ({ formData, setFormData }: { formData: BESSFormData, setF
 const RevenueStreamForm = ({ formData, setFormData }: { formData: BESSFormData, setFormData: (data: BESSFormData) => void }) => {
   const [selectedRevenueStream, setSelectedRevenueStream] = useState<string>(formData.revenueStreamType || '');
   
+  console.log('RevenueStreamForm - Current formData:', formData);
+
   const handleRevenueStreamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log('Revenue stream cambiato a:', value);
     setSelectedRevenueStream(value);
     setFormData({
       ...formData,
       revenueStreamType: value
-    } as BESSFormData);
+    });
   };
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -247,28 +242,26 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: BESSFormData, 
   return (
     <Box sx={{ mt: 3 }}>
       <Typography variant="h6" gutterBottom>
-        Seleziona il tipo di revenue stream
+        Configurazione dei Flussi di Ricavo
       </Typography>
       
-      <TextField
-        select
-        fullWidth
-        label="Tipo di Revenue Stream"
-        name="revenueStreamType"
-        value={selectedRevenueStream}
-        onChange={handleRevenueStreamChange}
-        variant="outlined"
-        sx={{ mb: 4 }}
-      >
-        <MenuItem value="tolling">Tolling</MenuItem>
-        <MenuItem value="capacityMarket">Capacity Market</MenuItem>
-        <MenuItem value="macse">MACSE (Mercato dei Servizi Energetici)</MenuItem>
-        <MenuItem value="ppa">PPA</MenuItem>
-        <MenuItem value="merchant">Merchant</MenuItem>
-      </TextField>
+      <FormControl component="fieldset" sx={{ mb: 2, mt: 2 }}>
+        <FormLabel component="legend">Tipo di Revenue Stream</FormLabel>
+        <RadioGroup
+          name="revenueStreamType"
+          value={selectedRevenueStream}
+          onChange={handleRevenueStreamChange}
+        >
+          <FormControlLabel value="PPA" control={<Radio />} label="Power Purchase Agreement (PPA)" />
+          <FormControlLabel value="MERCHANT" control={<Radio />} label="Mercato (Merchant)" />
+          <FormControlLabel value="TOLLING" control={<Radio />} label="Tolling" />
+          <FormControlLabel value="MACSE" control={<Radio />} label="Mercato Ambientale (MACSE)" />
+          <FormControlLabel value="CM" control={<Radio />} label="Capacity Market" />
+        </RadioGroup>
+      </FormControl>
       
       {/* Campi specifici per Tolling */}
-      {selectedRevenueStream === 'tolling' && (
+      {selectedRevenueStream === 'TOLLING' && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <TextField
@@ -343,7 +336,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: BESSFormData, 
       )}
       
       {/* Campi specifici per Capacity Market */}
-      {selectedRevenueStream === 'capacityMarket' && (
+      {selectedRevenueStream === 'CM' && (
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6}>
             <TextField
@@ -396,7 +389,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: BESSFormData, 
       )}
       
       {/* Campi specifici per MACSE */}
-      {selectedRevenueStream === 'macse' && (
+      {selectedRevenueStream === 'MACSE' && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <TextField
@@ -434,7 +427,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: BESSFormData, 
       )}
       
       {/* Campi specifici per PPA */}
-      {selectedRevenueStream === 'ppa' && (
+      {selectedRevenueStream === 'PPA' && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <TextField
@@ -499,7 +492,7 @@ const RevenueStreamForm = ({ formData, setFormData }: { formData: BESSFormData, 
       )}
       
       {/* Campi specifici per Merchant */}
-      {selectedRevenueStream === 'merchant' && (
+      {selectedRevenueStream === 'MERCHANT' && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
@@ -631,6 +624,8 @@ export default function BESSRegistrationPage() {
     setIsSubmitting(true);
     setError(null);
     
+    console.log('Invio dati del form:', formData);
+    
     try {
       // Preparazione dei dati per la API
       const assetData = {
@@ -663,10 +658,12 @@ export default function BESSRegistrationPage() {
         }
       };
       
+      console.log('Tipo di revenue stream:', formData.revenueStreamType);
+      
       // Logica specifica per ogni tipo di revenue stream
-      if (formData.revenueStreamType === 'tolling') {
+      if (formData.revenueStreamType === 'TOLLING') {
         assetData.revenueStream = {
-          type: 'tolling',
+          type: 'TOLLING',
           counterparty: '',
           contractDuration: typeof formData.tollingContractDuration === 'string' ? 
             parseInt(formData.tollingContractDuration) : (formData.tollingContractDuration || 0),
@@ -675,38 +672,29 @@ export default function BESSRegistrationPage() {
           endDate: '',
           operator: formData.tollingOperator || ''
         } as TollingRevenueStream;
-      } else if (formData.revenueStreamType === 'capacityMarket') {
+      } else if (formData.revenueStreamType === 'CM') {
         assetData.revenueStream = {
-          type: 'capacityMarket',
+          type: 'CM',
           counterparty: '',
           contractDuration: parseInt(formData.cmDuration as string),
           capacityVolume: parseFloat(formData.cmCapacityVolume as string),
           capacityPrice: parseFloat(formData.cmCapacityPrice as string)
         } as CapacityMarketRevenueStream;
-      } else if (formData.revenueStreamType === 'macse') {
+      } else if (formData.revenueStreamType === 'MACSE') {
         assetData.revenueStream = {
-          type: 'macse',
+          type: 'MACSE',
           counterparty: '',
           contractDuration: parseInt(formData.macseServiceType as string),
           macseServiceType: formData.macseServiceType || '',
           minPrice: parseFloat(formData.macseMinPrice as string)
         } as MACSeRevenueStream;
-      } else if (formData.revenueStreamType === 'ppa') {
+      } else if (formData.revenueStreamType === 'PPA') {
         assetData.revenueStream = {
-          type: 'ppa',
-          counterparty: formData.ppaCounterparty || '',
-          contractDuration: parseInt(formData.ppaContractDuration as string),
-          priceType: '',
-          strikePrice: 0,
-          fixedPrice: 0,
-          startDate: '',
-          endDate: '',
-          price: parseFloat(formData.ppaPrice as string),
-          guaranteedVolume: parseFloat(formData.ppaGuaranteedVolume as string)
-        } as PPARevenueStream;
-      } else if (formData.revenueStreamType === 'merchant') {
+          type: 'PPA'
+        };
+      } else if (formData.revenueStreamType === 'MERCHANT') {
         assetData.revenueStream = {
-          type: 'merchant',
+          type: 'MERCHANT',
           estimatedRevenue: parseFloat(formData.merchantEstimatedRevenue as string),
           strategy: formData.merchantStrategy || '',
           mgp: formData.merchantMGP || false,
@@ -715,6 +703,8 @@ export default function BESSRegistrationPage() {
           altro: formData.merchantAltro || false
         } as MerchantRevenueStream;
       }
+      
+      console.log('Dati asset preparati per invio:', assetData);
       
       // Chiamata alla API per salvare l'asset
       const response = await fetch('/api/assets', {
@@ -725,10 +715,16 @@ export default function BESSRegistrationPage() {
         body: JSON.stringify(assetData),
       });
       
+      console.log('Risposta API:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Errore API:', errorData);
         throw new Error(errorData.error || 'Errore durante la registrazione dell\'asset');
       }
+      
+      const responseData = await response.json();
+      console.log('Risposta API completa:', responseData);
       
       setSuccess(true);
       // Dopo 2 secondi, reindirizza alla dashboard
@@ -737,66 +733,11 @@ export default function BESSRegistrationPage() {
       }, 2000);
       
     } catch (error) {
+      console.error('Errore nella sottomissione:', error);
       setError((error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const addRevenueStream = (type: RevenueStreamType) => {
-    let newStream: RevenueStreamData;
-    
-    if (type === 'tolling') {
-      newStream = {
-        type: 'tolling',
-        counterparty: '',
-        contractDuration: 0,
-        tollingRemunerationType: '',
-        startDate: '',
-        endDate: ''
-      } as TollingRevenueStream;
-    } else if (type === 'capacityMarket') {
-      newStream = {
-        type: 'capacityMarket',
-        counterparty: '',
-        contractDuration: 0,
-        capacityVolume: 0
-      } as CapacityMarketRevenueStream;
-    } else if (type === 'macse') {
-      newStream = {
-        type: 'macse',
-        counterparty: '',
-        contractDuration: 0,
-        macseServiceType: ''
-      } as MACSeRevenueStream;
-    } else if (type === 'merchant') {
-      newStream = {
-        type: 'merchant',
-        estimatedRevenue: 0
-      } as MerchantRevenueStream;
-    } else {
-      // Fallback per altri tipi non supportati per BESS
-      return;
-    }
-    
-    setFormData({
-      ...formData,
-      revenueStreams: [...formData.revenueStreams, newStream]
-    });
-  };
-
-  const handleRevenueStreamChange = (index: number, field: string, value: any) => {
-    const updatedStreams = [...formData.revenueStreams];
-    
-    // Aggiorniamo in modo sicuro con controllo dei tipi
-    if (field in updatedStreams[index]) {
-      (updatedStreams[index] as any)[field] = value;
-    }
-    
-    setFormData({
-      ...formData,
-      revenueStreams: updatedStreams
-    });
   };
 
   return (
@@ -876,7 +817,7 @@ export default function BESSRegistrationPage() {
             
             {activeStep === steps.length && (
               <Paper square elevation={0} sx={{ p: 3 }}>
-                <Typography>Tutti i passaggi completati - Puoi ora registrare l'asset</Typography>
+                <Typography>Tutti i passaggi completati - Puoi ora registrare l&apos;asset</Typography>
                 <Button 
                   onClick={handleSubmit} 
                   sx={{ mt: 1, mr: 1 }} 

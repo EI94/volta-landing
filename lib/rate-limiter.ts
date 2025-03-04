@@ -1,50 +1,84 @@
-import { NextRequest } from 'next/server';
-import { Redis } from '@upstash/redis';
+import redisClient, { isRedisEnabled } from './redis';
+import { NextRequest, NextResponse } from 'next/server';
 
-// Configurazione Redis per il rate limiting
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || ''
-});
-
-interface RateLimitConfig {
-  limit: number;      // Numero massimo di richieste
-  window: number;     // Finestra temporale in secondi
-}
-
-const DEFAULT_CONFIG: RateLimitConfig = {
-  limit: 100,        // 100 richieste
-  window: 60         // per minuto
+// Configurazione di default per il rate limiting
+const DEFAULT_CONFIG = {
+  limit: 100,         // Numero massimo di richieste
+  window: 60,         // Finestra di tempo in secondi
+  headers: true       // Includi headers X-RateLimit nei response
 };
 
+/**
+ * Rate limiter basato su Redis per le API routes
+ * 
+ * Se Redis è disabilitato, tutte le richieste sono consentite
+ * 
+ * @param req NextRequest
+ * @param config Configurazione del rate limiter
+ * @returns Oggetto con proprietà success, e opzionale response se il limite è superato
+ */
 export async function rateLimiter(
-  request: NextRequest,
-  config: RateLimitConfig = DEFAULT_CONFIG
-) {
+  req: NextRequest,
+  config: typeof DEFAULT_CONFIG = DEFAULT_CONFIG
+): Promise<{ success: boolean, response?: NextResponse }> {
+  // Se Redis è disabilitato, non applicare rate limiting
+  if (!isRedisEnabled) {
+    // console.log('[Rate Limiter] Redis disabilitato, limite non applicato');
+    return { success: true };
+  }
+
+  // Crea una chiave unica per l'IP
+  const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+  const key = `rate-limit:${ip}`;
+
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'anonymous';
-    const key = `rate-limit:${ip}`;
-
     // Recupera il contatore attuale
-    const counter = await redis.get<number>(key) || 0;
+    let counter = 0;
+    try {
+      const result = await redisClient.get<string>(key);
+      counter = Number(result || 0);
+    } catch (getError) {
+      console.error('[Rate Limiter] Errore nel recupero del contatore:', getError);
+      // Se c'è un errore nel recupero, non blocchiamo la richiesta
+      return { success: true };
+    }
 
+    // Verifica se il limite è stato superato
     if (counter >= config.limit) {
       return {
         success: false,
-        message: 'Limite di richieste superato. Riprova più tardi.'
+        response: NextResponse.json(
+          { 
+            error: 'Troppe richieste', 
+            message: 'Hai superato il limite di richieste consentite. Riprova più tardi.' 
+          },
+          { status: 429 }
+        )
       };
     }
 
-    // Incrementa il contatore e imposta la scadenza
-    await redis.setex(key, config.window, counter + 1);
+    // Incrementa il contatore
+    try {
+      await redisClient.incr(key);
+    } catch (incrError) {
+      console.error('[Rate Limiter] Errore nell\'incremento del contatore:', incrError);
+      // Se c'è un errore nell'incremento, non blocchiamo la richiesta
+    }
+    
+    // Imposta la scadenza se è la prima richiesta
+    if (counter === 0) {
+      try {
+        await redisClient.expire(key, config.window);
+      } catch (expireError) {
+        console.error('[Rate Limiter] Errore nell\'impostazione della scadenza:', expireError);
+        // Se c'è un errore nell'impostazione della scadenza, non blocchiamo la richiesta
+      }
+    }
 
-    return {
-      success: true,
-      remaining: config.limit - (counter + 1)
-    };
+    return { success: true };
   } catch (error) {
-    console.error('Errore nel rate limiting:', error);
-    // In caso di errore, permettiamo la richiesta
-    return { success: true, remaining: 0 };
+    // In caso di errore generico, non blocchiamo la richiesta
+    console.error('[Rate Limiter] Errore generale:', error);
+    return { success: true };
   }
 } 
