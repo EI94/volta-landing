@@ -6,7 +6,6 @@ import WeatherOpen from './WeatherOpen';
 import AIActionSuggestions, { AIAction } from './AIActionSuggestions';
 import { Tab } from '@headlessui/react';
 import { Gauge, Battery, Cpu, BarChart3, RefreshCw, MessageSquare, PlusCircle, Sun, TrendingUp, DollarSign } from 'lucide-react';
-import Card from './Card';
 import Link from 'next/link';
 import OpenAIService, { ChatMessage } from '../lib/openai-service';
 import BessStateChart from './BessStateChart';
@@ -91,11 +90,20 @@ export default function DemoInterface() {
     setSimulationData(data);
   };
 
+  // Aggiornamento stato batteriaora non è più usato)
+  const setSimulationMode = (mode: string, power: number) => {
+    setSimulationData(prev => ({
+      ...prev,
+      mode,
+      power
+    }));
+  };
+
   // Generazione di azioni AI suggerite
   const generateAISuggestions = () => {
     // Esempio di azioni suggerite
     const newActions: AIAction[] = [];
-    
+
     // La logica di generazione può essere più sofisticata basandosi sui dati reali
     if (batteryCharge < 30) {
       newActions.push({
@@ -103,22 +111,10 @@ export default function DemoInterface() {
         power: 50,
         expectedRevenue: 120.5,
         confidence: 0.92,
-        explanation: "La batteria è sotto il 30% e il prezzo dell'energia è basso. Consiglio di caricare ora.",
-        priority: 'high',
-        timeframe: '2h',
-      });
-    } else if (batteryCharge > 80 && Math.random() > 0.5) {
-      newActions.push({
-        type: 'DISCHARGE',
-        power: 70,
-        expectedRevenue: 180.25,
-        confidence: 0.86,
-        explanation: "Il prezzo dell'energia è alto nelle prossime ore. Consiglio di scaricare per massimizzare i profitti.",
-        priority: 'medium',
-        timeframe: '4h',
+        explanation: "La batteria è sotto il 30% e il prezzo dell&apos;energia è basso. Consiglio di caricare ora.",
       });
     }
-    
+
     // Aggiungi un'azione di manutenzione se la batteria è stata in uso per molto tempo
     if (Math.random() > 0.7) {
       newActions.push({
@@ -131,14 +127,14 @@ export default function DemoInterface() {
         timeframe: '24h',
       });
     }
-    
+
     setSuggestedActions(newActions);
   };
 
   // Richiama la generazione delle azioni AI quando cambia lo stato della simulazione
   useEffect(() => {
     generateAISuggestions();
-  }, [simulationData]);
+  }, [simulationData, batteryCharge]);
 
   // Gestisce l'esecuzione delle azioni AI
   const handleExecuteAIAction = (action: AIAction) => {
@@ -215,8 +211,8 @@ export default function DemoInterface() {
       { name: 'MB', value: 950 },
       { name: 'UVAM', value: 1200 },
     ];
-    
-    return (
+
+  return (
       <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
         <h3 className="text-lg font-medium mb-2 sm:mb-4">Stato Batteria {selectedAsset.name}</h3>
         <div className="space-y-3 sm:space-y-4">
@@ -234,7 +230,7 @@ export default function DemoInterface() {
             />
           </div>
 
-          <div>
+        <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Potenza: {simulationData.power} kW
             </label>
@@ -251,8 +247,8 @@ export default function DemoInterface() {
               <span>-1000 kW (Scarica)</span>
               <span>0 kW</span>
               <span>1000 kW (Carica)</span>
-            </div>
-          </div>
+        </div>
+        </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mt-4 sm:mt-6">
             <button
@@ -714,8 +710,8 @@ export default function DemoInterface() {
                     >
                       {message.content.split('\n').map((line, i) => (
                         <p key={i} className={i > 0 ? 'mt-2' : ''}>{line}</p>
-                      ))}
-                    </div>
+          ))}
+        </div>
                   </div>
                 ))}
                 {isLoadingChat && (
@@ -731,22 +727,22 @@ export default function DemoInterface() {
                 )}
               </div>
               <div className="flex">
-                <input
-                  type="text"
+          <input
+            type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Scrivi un messaggio..."
                   className="flex-1 p-2 sm:p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <button
+          />
+          <button
                   onClick={handleSendMessage}
                   disabled={isLoadingChat || !inputMessage.trim()}
                   className="bg-blue-600 text-white p-2 sm:p-3 rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
-                >
+          >
                   Invia
-                </button>
-              </div>
+          </button>
+        </div>
             </div>
           </Tab.Panel>
         </Tab.Panels>
