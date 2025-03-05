@@ -25,13 +25,17 @@ interface MarketData {
   tradingVolume?: number;
 }
 
-export default function EnergyMarketDashboard(): JSX.Element {
+interface EnergyMarketDashboardProps {
+  city?: string;
+}
+
+export default function EnergyMarketDashboard({ city = "Milano" }: EnergyMarketDashboardProps): JSX.Element {
   const [marketData, setMarketData] = useState<MarketData | null>(null);
 
   useEffect(() => {
     async function fetchMarketData() {
       try {
-        const res = await fetch("/api/energy-market");
+        const res = await fetch(`/api/energy-market${city ? `?city=${encodeURIComponent(city)}` : ""}`);
         const data = await res.json();
         
         const adaptedData: MarketData = {
@@ -60,7 +64,7 @@ export default function EnergyMarketDashboard(): JSX.Element {
       }
     }
     fetchMarketData();
-  }, []);
+  }, [city]);
 
   if (!marketData) {
     return <p className="text-center py-4">Caricamento dati di mercato...</p>;
