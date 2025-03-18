@@ -10,19 +10,25 @@ import { translations } from "../translations";
 import MLOptimizationDashboard from '../components/MLOptimizationDashboard';
 
 // Dati di esempio per il test
-const mockBessData = Array.from({ length: 24 }, (_, i) => ({
-  timestamp: new Date(2024, 0, 1, i),
-  chargePercent: Math.random() * 100,
-  healthPercent: 95 + Math.random() * 5,
-  temperature: 25 + Math.random() * 10
-}));
+const mockBessData = Array.from({ length: 24 }, (_, i) => {
+  const date = new Date(2024, 0, 1, i);
+  return {
+    timestamp: date,
+    chargePercent: Math.round(Math.random() * 100),
+    healthPercent: Math.round(95 + Math.random() * 5),
+    temperature: Math.round(25 + Math.random() * 10)
+  };
+});
 
-const mockPvData = Array.from({ length: 24 }, (_, i) => ({
-  timestamp: new Date(2024, 0, 1, i),
-  outputMW: Math.random() * 10,
-  performanceRatio: 85 + Math.random() * 15,
-  temperature: 20 + Math.random() * 15
-}));
+const mockPvData = Array.from({ length: 24 }, (_, i) => {
+  const date = new Date(2024, 0, 1, i);
+  return {
+    timestamp: date,
+    outputMW: Math.round(Math.random() * 10 * 100) / 100,
+    performanceRatio: Math.round(85 + Math.random() * 15),
+    temperature: Math.round(20 + Math.random() * 15)
+  };
+});
 
 export default function HomePage(): JSX.Element {
   // Utilizza il contesto e verifica che non sia undefined

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BessStateChart from './BessStateChart';
 import MLOptimizationResults from './MLOptimizationResults';
 import Card from './Card';
@@ -25,6 +25,15 @@ const MLOptimizationDashboard: React.FC<MLOptimizationDashboardProps> = ({
   pvData
 }) => {
   const [selectedAsset, setSelectedAsset] = useState<'bess' | 'pv'>('bess');
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
