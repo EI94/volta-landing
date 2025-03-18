@@ -7,6 +7,22 @@ import Footer from "../components/Footer";
 import Link from "next/link";
 import { LanguageContext } from "../context/LanguageContext";
 import { translations } from "../translations";
+import MLOptimizationDashboard from '../components/MLOptimizationDashboard';
+
+// Dati di esempio per il test
+const mockBessData = Array.from({ length: 24 }, (_, i) => ({
+  timestamp: new Date(2024, 0, 1, i),
+  chargePercent: Math.random() * 100,
+  healthPercent: 95 + Math.random() * 5,
+  temperature: 25 + Math.random() * 10
+}));
+
+const mockPvData = Array.from({ length: 24 }, (_, i) => ({
+  timestamp: new Date(2024, 0, 1, i),
+  outputMW: Math.random() * 10,
+  performanceRatio: 85 + Math.random() * 15,
+  temperature: 20 + Math.random() * 15
+}));
 
 export default function HomePage(): JSX.Element {
   // Utilizza il contesto e verifica che non sia undefined
@@ -61,6 +77,10 @@ export default function HomePage(): JSX.Element {
             </p>
           </div>
         </section>
+        <MLOptimizationDashboard
+          bessData={mockBessData}
+          pvData={mockPvData}
+        />
       </main>
       <Footer />
     </>

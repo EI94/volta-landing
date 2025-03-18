@@ -14,6 +14,19 @@ interface BessStateChartProps {
   assetType?: 'bess' | 'pv';
 }
 
+interface TooltipPayload {
+  name: string;
+  value: number;
+  unit?: string;
+  color: string;
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}
+
 // Funzione per formattare i timestamp
 const formatTimestamp = (timestamp: Date | string): string => {
   if (!timestamp) return '';
@@ -32,12 +45,12 @@ const formatTimestamp = (timestamp: Date | string): string => {
 };
 
 // Funzione per personalizzare il tooltip
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white shadow-md rounded p-3 border border-gray-200">
         <p className="font-medium text-gray-800">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index) => (
           <p key={`item-${index}`} style={{ color: entry.color }}>
             {entry.name}: {entry.value.toFixed(1)} {entry.unit}
           </p>

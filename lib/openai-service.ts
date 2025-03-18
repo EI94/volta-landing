@@ -30,17 +30,8 @@ export const OpenAIService = {
     try {
       const { messages, model = 'gpt-4', temperature = 0.7, maxTokens = 1000 } = options;
 
-      // Determina l'URL base dell'API
-      const baseUrl = typeof window !== 'undefined' 
-        ? window.location.origin 
-        : 'http://localhost:3000';
-      
-      // Utilizza l'URL completo invece del percorso relativo
-      const apiUrl = `${baseUrl}/api/ai/chat`;
-      
-      console.log('Chiamata API a:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
+      // Utilizza sempre l'URL relativo per l'API
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,27 +40,17 @@ export const OpenAIService = {
           messages,
           model,
           temperature,
-          maxTokens
-        }),
+          max_tokens: maxTokens
+        })
       });
-      
-      // Se la risposta non è ok, prova a ottenere informazioni sull'errore
+
       if (!response.ok) {
-        let errorMessage = `Errore API: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch {
-          // Se non è JSON, ottieni il testo della risposta
-          const textContent = await response.text();
-          console.error('Risposta non JSON ricevuta:', textContent.substring(0, 200));
-          errorMessage = `Risposta non valida dal server: ${response.status}`;
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Errore nella chiamata API');
       }
 
       const data = await response.json();
-      return data.message;
+      return data.choices[0].message.content;
     } catch (error) {
       console.error('Errore durante la chiamata a OpenAI:', error);
       throw new Error('Impossibile ottenere una risposta dall\'AI. Riprova più tardi.');
