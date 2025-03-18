@@ -403,7 +403,7 @@ export default function DemoInterface() {
     } catch (error) {
       console.error('Errore durante la chiamata a OpenAI:', error);
       setChatMessages(prev => [
-        ...prev,
+          ...prev,
         {
           role: 'assistant',
           content: 'Mi dispiace, ho avuto un problema di connessione. Puoi riprovare tra qualche istante?'
@@ -427,7 +427,7 @@ export default function DemoInterface() {
       <div className="flex flex-col mb-6">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Energy Operator</h1>
         <p className="text-gray-600 text-sm sm:text-base">AI Powered Energy Assets</p>
-      </div>
+        </div>
       
       {/* Selettore degli asset */}
       <div className="mb-6 bg-white rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
@@ -544,7 +544,7 @@ export default function DemoInterface() {
                       htmlFor="auto-execute" 
                       className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${autoExecuteEnabled ? 'bg-blue-500' : 'bg-gray-300'}`}
                     ></label>
-                  </div>
+              </div>
                   <label htmlFor="auto-execute" className="text-xs sm:text-sm text-gray-700">Esecuzione Automatica</label>
                   <button 
                     onClick={generateAISuggestions}
@@ -552,7 +552,7 @@ export default function DemoInterface() {
                   >
                     <RefreshCw className="h-4 w-4" aria-hidden="true" />
                   </button>
-                </div>
+              </div>
               </div>
               <AIActionSuggestions 
                 actions={suggestedActions} 
@@ -568,8 +568,8 @@ export default function DemoInterface() {
             <div className="flex flex-col h-[500px]">
               <div className="flex-1 overflow-auto mb-4 rounded-lg border border-gray-200 p-3 sm:p-4">
                 {chatMessages.map((message, idx) => (
-                  <div 
-                    key={idx} 
+            <div
+              key={idx}
                     className={`flex mb-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div 
@@ -583,8 +583,8 @@ export default function DemoInterface() {
                         <p key={i} className={i > 0 ? 'mt-2' : ''}>{line}</p>
                       ))}
                     </div>
-                  </div>
-                ))}
+            </div>
+          ))}
                 {isLoadingChat && (
                   <div className="flex justify-start mb-3">
                     <div className="max-w-[80%] sm:max-w-[70%] p-3 rounded-lg bg-gray-100 text-gray-800 rounded-tl-none">
@@ -596,24 +596,24 @@ export default function DemoInterface() {
                     </div>
                   </div>
                 )}
-              </div>
+        </div>
               <div className="flex">
-                <input
-                  type="text"
+          <input
+            type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Scrivi un messaggio..."
                   className="flex-1 p-2 sm:p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <button
+          />
+          <button
                   onClick={handleSendMessage}
                   disabled={isLoadingChat || !inputMessage.trim()}
                   className="bg-blue-600 text-white p-2 sm:p-3 rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
-                >
+          >
                   Invia
-                </button>
-              </div>
+          </button>
+        </div>
             </div>
           </Tab.Panel>
         </Tab.Panels>
