@@ -12,6 +12,10 @@ const nextConfig = {
   swcMinify: true,
   experimental: {
     appDir: true,
+    serverActions: true,
+  },
+  images: {
+    domains: ['images.unsplash.com'],
   },
   webpack: (config) => {
     config.module.rules.push({
