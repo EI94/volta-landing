@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import EnergyMarketDashboard from './EnergyMarketDashboard';
 import WeatherOpen from './WeatherOpen';
 import AIActionSuggestions, { AIAction } from './AIActionSuggestions';
@@ -12,6 +12,8 @@ import BessStateChart from './BessStateChart';
 import { CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import PVDataChart from './PVDataChart';
 import BESSDataChart from '@/components/BESSDataChart';
+import { LanguageContext } from '../context/LanguageContext';
+import { translations } from '../translations';
 
 // Tipi di asset
 interface Asset {
@@ -54,6 +56,14 @@ function classNames(...classes: string[]) {
 }
 
 export default function DemoInterface() {
+  // Context di lingua
+  const langContext = useContext(LanguageContext);
+  if (!langContext) {
+    throw new Error("LanguageContext is not provided");
+  }
+  const { language } = langContext;
+  const t = translations[language].demo;
+
   // Stati
   const [selectedCity] = useState<string>("Milano");
   const [batteryCharge, _setBatteryCharge] = useState(65);
@@ -65,7 +75,7 @@ export default function DemoInterface() {
   const [autoExecuteEnabled, setAutoExecuteEnabled] = useState(false);
   const [suggestedActions, _setSuggestedActions] = useState<AIAction[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {role: 'assistant', content: 'Ciao! Sono il tuo assistente Volta AI. Come posso aiutarti con la gestione energetica oggi?'}
+    {role: 'assistant', content: t.assistantGreeting}
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoadingChat, setIsLoadingChat] = useState(false);
@@ -266,9 +276,9 @@ export default function DemoInterface() {
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-medium text-gray-700 flex items-center">
               <TrendingUp className="w-4 h-4 mr-1 text-blue-600" />
-              Storia Produzione
+              {t.productionHistory}
             </h4>
-            <span className="text-xs text-gray-500">Impianto FV Nord Milano - Luglio 2023</span>
+            <span className="text-xs text-gray-500">{t.pvPlantMilan}</span>
           </div>
           <div className="h-auto">
             <PVDataChart dataFile="inverter_data_12MW_north_milan_july2023.csv" />
@@ -279,9 +289,9 @@ export default function DemoInterface() {
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-medium text-gray-700 flex items-center">
               <TrendingUp className="w-4 h-4 mr-1 text-blue-600" />
-              Previsioni di Mercato
+              {t.marketForecast}
             </h4>
-            <span className="text-xs text-gray-500">Prossime 24 ore</span>
+            <span className="text-xs text-gray-500">{t.next24Hours}</span>
           </div>
           <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -425,15 +435,15 @@ export default function DemoInterface() {
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4 max-w-7xl">
       <div className="flex flex-col mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Energy Operator</h1>
-        <p className="text-gray-600 text-sm sm:text-base">AI Powered Energy Assets</p>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{t.pageTitle}</h1>
+        <p className="text-gray-600 text-sm sm:text-base">{t.subTitle}</p>
         </div>
       
       {/* Selettore degli asset */}
       <div className="mb-6 bg-white rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div className="mb-3 sm:mb-0">
-            <h2 className="text-base sm:text-lg font-medium">Asset selezionato</h2>
+            <h2 className="text-base sm:text-lg font-medium">{t.selectedAsset}</h2>
             <select 
               className="mt-1 block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
               value={selectedAsset?.id || ''}
@@ -445,14 +455,14 @@ export default function DemoInterface() {
             >
               {assets.map(asset => (
                 <option key={asset.id} value={asset.id}>
-                  {asset.name} ({asset.type === 'bess' ? 'Batteria' : 'Fotovoltaico'})
+                  {asset.name} ({asset.type === 'bess' ? t.batteryType : t.pvType})
                 </option>
               ))}
             </select>
           </div>
           <Link href="/asset-registration" className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             <PlusCircle className="w-4 h-4 mr-1" />
-            Registra Nuovo Asset
+            {t.registerNewAsset}
           </Link>
         </div>
       </div>

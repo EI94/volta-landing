@@ -74,12 +74,10 @@ export default function HomePage(): JSX.Element {
         <section className="py-20 bg-white">
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-4xl font-bold mb-6">
-              {language === "it" ? "La Nostra Soluzione" : "Our Solution"}
+              {t.solution}
             </h2>
             <p className="text-xl text-gray-700 max-w-3xl mx-auto">
-              {language === "it"
-                ? "Ottimizziamo la performance dei tuoi asset energetici usando AI all'avanguardia e insight basati sui dati."
-                : "We optimize the performance of your energy assets using state-of-the-art AI and data-driven insights."}
+              {t.solutionText}
             </p>
           </div>
         </section>

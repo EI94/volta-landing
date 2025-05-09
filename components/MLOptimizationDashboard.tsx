@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import BessStateChart from './BessStateChart';
 import MLOptimizationResults from './MLOptimizationResults';
-import Card from './Card';
+import { Card } from './Card';
+import { LanguageContext } from '../context/LanguageContext';
+import { translations } from '../translations';
 
 interface MLOptimizationDashboardProps {
   bessData: Array<{
@@ -26,6 +28,12 @@ const MLOptimizationDashboard: React.FC<MLOptimizationDashboardProps> = ({
 }) => {
   const [selectedAsset, setSelectedAsset] = useState<'bess' | 'pv'>('bess');
   const [isClient, setIsClient] = useState(false);
+  const langContext = useContext(LanguageContext);
+  if (!langContext) {
+    throw new Error("LanguageContext is not provided");
+  }
+  const { language } = langContext;
+  const t = translations[language].dashboard;
 
   useEffect(() => {
     setIsClient(true);
@@ -38,7 +46,7 @@ const MLOptimizationDashboard: React.FC<MLOptimizationDashboardProps> = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Dashboard Ottimizzazione ML</h2>
+        <h2 className="text-2xl font-bold">{t.title}</h2>
         <div className="flex space-x-4">
           <button
             onClick={() => setSelectedAsset('bess')}
@@ -48,7 +56,7 @@ const MLOptimizationDashboard: React.FC<MLOptimizationDashboardProps> = ({
                 : 'bg-gray-200 text-gray-700'
             }`}
           >
-            BESS
+            {t.bess}
           </button>
           <button
             onClick={() => setSelectedAsset('pv')}
@@ -58,7 +66,7 @@ const MLOptimizationDashboard: React.FC<MLOptimizationDashboardProps> = ({
                 : 'bg-gray-200 text-gray-700'
             }`}
           >
-            Fotovoltaico
+            {t.pv}
           </button>
         </div>
       </div>
@@ -69,17 +77,17 @@ const MLOptimizationDashboard: React.FC<MLOptimizationDashboardProps> = ({
         optimizationScore={selectedAsset === 'bess' ? 92 : 88}
         mlAlgorithm={
           selectedAsset === 'bess'
-            ? 'Deep Reinforcement Learning (DRL) con Q-Learning'
-            : 'Random Forest con Time Series Analysis'
+            ? t.bessAlgorithm
+            : t.pvAlgorithm
         }
         mlDescription={
           selectedAsset === 'bess'
-            ? 'Ottimizza i cicli di carica/scarica per massimizzare il profitto considerando i prezzi di mercato e la degradazione della batteria.'
-            : 'Prevede la produzione solare e ottimizza il timing delle vendite di energia basandosi su dati meteorologici e storici.'
+            ? t.bessDescription
+            : t.pvDescription
         }
       />
 
-      <Card title="Andamento Storico">
+      <Card title={t.trendTitle}>
         <BessStateChart
           data={selectedAsset === 'bess' ? bessData : pvData}
           assetType={selectedAsset}

@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { LineChart, Line, BarChart, Bar, Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Battery, Zap, Thermometer, Wind, AlertTriangle } from 'lucide-react';
+import { LanguageContext } from '../context/LanguageContext';
+import { translations } from '../translations';
 
 interface BESSDataChartProps {
   dataFile?: string;
@@ -41,6 +43,13 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
   const [selectedMetric, setSelectedMetric] = useState<keyof BESSRecord>('BESS_Power_kW');
   const [selectedDateRange, setSelectedDateRange] = useState('day');
   const [stats, setStats] = useState<{ min: number; max: number; avg: number }>({ min: 0, max: 0, avg: 0 });
+
+  const langContext = useContext(LanguageContext);
+  if (!langContext) {
+    throw new Error("LanguageContext is not provided");
+  }
+  const { language } = langContext;
+  const t = translations[language].bess;
 
   // Metriche disponibili per la visualizzazione
   const metrics = [
@@ -365,30 +374,30 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
           {/* Statistiche per modalità operativa e guasti */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
             <div>
-              <h3 className="text-lg font-semibold mb-3">Modalità Operative</h3>
+              <h3 className="text-lg font-semibold mb-3">{t.operatingModes}</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={modeStats}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis label={{ value: '%', angle: -90, position: 'insideLeft' }} />
-                    <Tooltip formatter={(value: number) => [`${value.toFixed(2)}%`, 'Percentuale Tempo']} />
-                    <Bar dataKey="value" fill="#8884d8" name="% Tempo" />
+                    <Tooltip formatter={(value: number) => [`${value.toFixed(2)}%`, t.percentTime]} />
+                    <Bar dataKey="value" fill="#8884d8" name={t.percentTime} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
             
             <div>
-              <h3 className="text-lg font-semibold mb-3">Guasti Rilevati</h3>
+              <h3 className="text-lg font-semibold mb-3">{t.detectedFaults}</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={faultStats}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip formatter={(value: number) => [value, 'Conteggio']} />
-                    <Bar dataKey="value" fill="#ff8042" name="Conteggio" />
+                    <Tooltip formatter={(value: number) => [value, t.count]} />
+                    <Bar dataKey="value" fill="#ff8042" name={t.count} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -398,8 +407,7 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
           {/* Note e info aggiuntive */}
           <div className="mt-8 border-t pt-4 text-sm text-gray-600">
             <p>
-              <span className="font-medium">Note:</span> Dati di un BESS da 60 MW / 240 MWh (4h) situato a Viterbo. 
-              Le modalità operative includono carica, scarica e inattività, basate su una strategia di arbitraggio energetico.
+              <span className="font-medium">{t.notes}</span> {t.notesText}
             </p>
           </div>
         </>
