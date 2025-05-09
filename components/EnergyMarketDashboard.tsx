@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -12,6 +12,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { LanguageContext } from "../context/LanguageContext";
+import { translations } from "../translations";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -31,6 +33,12 @@ interface EnergyMarketDashboardProps {
 
 export default function EnergyMarketDashboard({ city = "Milano" }: EnergyMarketDashboardProps): JSX.Element {
   const [marketData, setMarketData] = useState<MarketData | null>(null);
+  const langContext = useContext(LanguageContext);
+  if (!langContext) {
+    throw new Error("LanguageContext is not provided");
+  }
+  const { language } = langContext;
+  const t = translations[language].market;
 
   useEffect(() => {
     async function fetchMarketData() {
@@ -67,14 +75,14 @@ export default function EnergyMarketDashboard({ city = "Milano" }: EnergyMarketD
   }, [city]);
 
   if (!marketData) {
-    return <p className="text-center py-4">Caricamento dati di mercato...</p>;
+    return <p className="text-center py-4">{t.loadingMarketData}</p>;
   }
 
   const chartData = {
     labels: marketData.trend?.labels || [],
     datasets: [
       {
-        label: "Price (€/MWh)",
+        label: t.priceEurMwh,
         data: marketData.trend?.prices || [],
         borderColor: "rgba(37, 99, 235, 1)",
         backgroundColor: "rgba(37, 99, 235, 0.2)",
@@ -87,14 +95,14 @@ export default function EnergyMarketDashboard({ city = "Milano" }: EnergyMarketD
     responsive: true,
     plugins: {
       legend: { position: "top" as const },
-      title: { display: true, text: "Energy Market Price Trend" },
+      title: { display: true, text: t.energyMarketPriceTrend },
     },
   };
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6">
       <div className="mb-4 text-center">
-        <p className="text-xl font-semibold">Current Price: €{marketData.currentPrice}/MWh</p>
+        <p className="text-xl font-semibold">{t.currentPrice}: €{marketData.currentPrice}/MWh</p>
       </div>
       <Line data={chartData} options={options} />
     </div>

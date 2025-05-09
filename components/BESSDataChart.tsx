@@ -235,13 +235,13 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
       
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
-          <p>Caricamento dati in corso...</p>
+          <p>{t.loadingData}</p>
         </div>
       ) : error ? (
         <div className="text-red-500 p-4 border border-red-200 rounded-md bg-red-50 mb-4">
           <p className="flex items-center">
             <AlertTriangle className="mr-2 h-5 w-5" />
-            {error}
+            {t.errorLoading} {error}
           </p>
         </div>
       ) : (

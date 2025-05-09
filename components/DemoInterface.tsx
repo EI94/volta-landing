@@ -27,8 +27,8 @@ interface Asset {
 
 interface RevenueItem {
   name: string;
-  vendita: number;
-  servizi: number;
+  energySales: number;
+  gridServices: number;
 }
 
 // Mock iniziale degli asset
@@ -63,8 +63,10 @@ export default function DemoInterface() {
   }
   const { language } = langContext;
   const t = translations[language].demo;
+  const marketT = translations[language].market;
 
   // Stati
+  const [activeTab, setActiveTab] = useState('status');
   const [selectedCity] = useState<string>("Milano");
   const [batteryCharge, _setBatteryCharge] = useState(65);
   const [simulationData, _setSimulationData] = useState({
@@ -110,14 +112,14 @@ export default function DemoInterface() {
   
   // Dati di simulazione per le previsioni di mercato
   const marketForecastData = [
-    { hour: '14:00', price: '89.50', trend: 'up', forecast: 'Picco' },
-    { hour: '15:00', price: '95.20', trend: 'up', forecast: 'Picco' },
-    { hour: '16:00', price: '92.70', trend: 'down', forecast: 'Calo' },
-    { hour: '17:00', price: '87.30', trend: 'down', forecast: 'Calo' },
-    { hour: '18:00', price: '91.40', trend: 'up', forecast: 'Picco' },
-    { hour: '19:00', price: '104.20', trend: 'up', forecast: 'Picco' },
-    { hour: '20:00', price: '110.50', trend: 'up', forecast: 'Picco' },
-    { hour: '21:00', price: '98.30', trend: 'down', forecast: 'Calo' },
+    { hour: '14:00', price: '89.50', trend: 'up', forecast: 'peak' },
+    { hour: '15:00', price: '95.20', trend: 'up', forecast: 'peak' },
+    { hour: '16:00', price: '92.70', trend: 'down', forecast: 'decrease' },
+    { hour: '17:00', price: '87.30', trend: 'down', forecast: 'decrease' },
+    { hour: '18:00', price: '91.40', trend: 'up', forecast: 'peak' },
+    { hour: '19:00', price: '104.20', trend: 'up', forecast: 'peak' },
+    { hour: '20:00', price: '110.50', trend: 'up', forecast: 'peak' },
+    { hour: '21:00', price: '98.30', trend: 'down', forecast: 'decrease' },
   ];
   
   // Dati per PV revenue stream
@@ -130,11 +132,11 @@ export default function DemoInterface() {
 
   // Dati simulati per la visualizzazione
   const bessRevenueData: RevenueItem[] = [
-    { name: 'Gen', vendita: 400, servizi: 240 },
-    { name: 'Feb', vendita: 300, servizi: 138 },
-    { name: 'Mar', vendita: 200, servizi: 980 },
-    { name: 'Apr', vendita: 280, servizi: 390 },
-    { name: 'Mag', vendita: 180, servizi: 480 }
+    { name: '01', energySales: 400, gridServices: 240 },
+    { name: '02', energySales: 300, gridServices: 138 },
+    { name: '03', energySales: 200, gridServices: 980 },
+    { name: '04', energySales: 280, gridServices: 390 },
+    { name: '05', energySales: 180, gridServices: 480 }
   ];
 
   // Dati di stato per fotovoltaico ed acquisto / vendita di energia
@@ -185,8 +187,8 @@ export default function DemoInterface() {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="vendita" fill="#8884d8" name={t.energySale} />
-            <Bar dataKey="servizi" fill="#82ca9d" name={t.gridServices} />
+            <Bar dataKey="energySales" fill="#8884d8" name={t.energySale} />
+            <Bar dataKey="gridServices" fill="#82ca9d" name={t.gridServices} />
           </BarChart>
         </div>
       </div>
@@ -302,6 +304,7 @@ export default function DemoInterface() {
                   <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.hour}</th>
                   <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.price}</th>
                   <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.trend}</th>
+                  <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.forecast}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -318,7 +321,12 @@ export default function DemoInterface() {
                             : 'bg-gray-100 text-gray-800'
                       }`}>
                         {item.trend === 'up' ? '↑' : item.trend === 'down' ? '↓' : '–'}
+                        {' '}
+                        {item.trend === 'up' ? marketT.upTrend : item.trend === 'down' ? marketT.downTrend : marketT.stableTrend}
                       </span>
+                    </td>
+                    <td className="px-3 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                      {marketT[item.forecast as keyof typeof marketT]}
                     </td>
                   </tr>
                 ))}
@@ -343,8 +351,8 @@ export default function DemoInterface() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="vendita" fill="#82ca9d" name={t.energySale} />
-                <Bar dataKey="incentivi" fill="#8884d8" name={t.incentives} />
+                <Bar dataKey="value" fill="#82ca9d" name={t.energySale} />
+                <Bar dataKey="incentives" fill="#8884d8" name={t.incentives} />
               </BarChart>
             </ResponsiveContainer>
           </div>

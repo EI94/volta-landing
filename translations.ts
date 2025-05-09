@@ -79,6 +79,7 @@ export const translations = {
         weatherForecast: "Previsioni Meteo",
         refresh: "Aggiorna",
         trend: "Trend",
+        forecast: "Previsione",
         weeklyForecast: "Previsione settimanale",
         incentives: "Incentivi",
         batteryViterbo: "Batteria Viterbo (Battery)",
@@ -125,7 +126,37 @@ export const translations = {
         percentTime: "% Tempo",
         count: "Conteggio",
         notes: "Note:",
-        notesText: "Dati di un BESS da 60 MW / 240 MWh (4h) situato a Viterbo. Le modalità operative includono carica, scarica e inattività, basate su una strategia di arbitraggio energetico."
+        notesText: "Dati di un BESS da 60 MW / 240 MWh (4h) situato a Viterbo. Le modalità operative includono carica, scarica e inattività, basate su una strategia di arbitraggio energetico.",
+        systemStorage: "Sistema Accumulo (BESS) Viterbo - 60 MW / 240 MWh",
+        powerKW: "Potenza (kW)",
+        stateOfCharge: "Stato di Carica (%)",
+        marketPrice: "Prezzo Mercato (€/MWh)",
+        temperatureC: "Temperatura (°C)",
+        frequency: "Frequenza (Hz)",
+        timeRange: {
+          hour: "1 ora",
+          day: "1 giorno",
+          week: "1 settimana",
+          month: "1 mese"
+        },
+        statistics: {
+          minValue: "Valore Minimo",
+          maxValue: "Valore Massimo",
+          avgValue: "Valore Medio"
+        },
+        loadingData: "Caricamento dati in corso...",
+        errorLoading: "Errore nel caricamento dei dati:"
+      },
+      market: {
+        loadingMarketData: "Caricamento dati di mercato...",
+        priceEurMwh: "Prezzo (€/MWh)",
+        energyMarketPriceTrend: "Andamento Prezzo Mercato Energia",
+        currentPrice: "Prezzo Attuale",
+        upTrend: "In aumento",
+        downTrend: "In diminuzione",
+        stableTrend: "Stabile",
+        peak: "Picco",
+        decrease: "Calo"
       }
     },
     en: {
@@ -207,6 +238,7 @@ export const translations = {
         weatherForecast: "Weather Forecast",
         refresh: "Refresh",
         trend: "Trend",
+        forecast: "Forecast",
         weeklyForecast: "Weekly Forecast",
         incentives: "Incentives",
         batteryViterbo: "Viterbo Battery",
@@ -253,7 +285,37 @@ export const translations = {
         percentTime: "% Time",
         count: "Count",
         notes: "Notes:",
-        notesText: "Data from a 60 MW / 240 MWh (4h) BESS located in Viterbo. Operating modes include charging, discharging, and idle, based on an energy arbitrage strategy."
+        notesText: "Data from a 60 MW / 240 MWh (4h) BESS located in Viterbo. Operating modes include charging, discharging, and idle, based on an energy arbitrage strategy.",
+        systemStorage: "Energy Storage System (BESS) Viterbo - 60 MW / 240 MWh",
+        powerKW: "Power (kW)",
+        stateOfCharge: "State of Charge (%)",
+        marketPrice: "Market Price (€/MWh)",
+        temperatureC: "Temperature (°C)",
+        frequency: "Frequency (Hz)",
+        timeRange: {
+          hour: "1 hour",
+          day: "1 day",
+          week: "1 week",
+          month: "1 month"
+        },
+        statistics: {
+          minValue: "Minimum Value",
+          maxValue: "Maximum Value",
+          avgValue: "Average Value"
+        },
+        loadingData: "Loading data...",
+        errorLoading: "Error loading data:"
+      },
+      market: {
+        loadingMarketData: "Loading market data...",
+        priceEurMwh: "Price (€/MWh)",
+        energyMarketPriceTrend: "Energy Market Price Trend",
+        currentPrice: "Current Price",
+        upTrend: "Up",
+        downTrend: "Down",
+        stableTrend: "Stable",
+        peak: "Peak",
+        decrease: "Decrease"
       }
     },
   };
