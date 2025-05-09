@@ -13,10 +13,9 @@ const nextConfig = {
   output: 'standalone',
   // Configurazione per l'API e il rendering serverless
   experimental: {
-    serverActions: true,
-    // Gestione di recharts come pacchetto esterno
-    serverComponentsExternalPackages: ['recharts']
-  }
+    serverActions: true
+  },
+  serverExternalPackages: ['recharts']
 }
 
 module.exports = nextConfig 
