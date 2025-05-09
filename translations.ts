@@ -82,7 +82,7 @@ export const translations = {
         forecast: "Previsione",
         weeklyForecast: "Previsione settimanale",
         incentives: "Incentivi",
-        batteryViterbo: "Batteria Viterbo (Battery)",
+        batteryViterbo: "Batteria Viterbo",
         systemStorage: "Sistema Accumulo (BESS) Viterbo - 60 MW / 240 MWh",
         powerKW: "Potenza (kW)",
         stateOfCharge: "Stato di Carica (%)",
@@ -157,6 +157,15 @@ export const translations = {
         stableTrend: "Stabile",
         peak: "Picco",
         decrease: "Calo"
+      },
+      bessChart: {
+        noDataAvailable: "Nessun dato disponibile",
+        bessStatusChart: "Andamento BESS",
+        charge: "Carica",
+        health: "Salute",
+        temperature: "Temperatura",
+        production: "Produzione",
+        performanceRatio: "Performance Ratio"
       }
     },
     en: {
@@ -316,6 +325,15 @@ export const translations = {
         stableTrend: "Stable",
         peak: "Peak",
         decrease: "Decrease"
+      },
+      bessChart: {
+        noDataAvailable: "No data available",
+        bessStatusChart: "BESS Status",
+        charge: "Charge",
+        health: "Health",
+        temperature: "Temperature",
+        production: "Production",
+        performanceRatio: "Performance Ratio"
       }
     },
   };

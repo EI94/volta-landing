@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LanguageContext } from '../context/LanguageContext';
+import { translations } from '../translations';
 
 // Estendo l'interfaccia per supportare sia BESS che PV
 interface BessStateChartProps {
@@ -62,8 +64,16 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 };
 
 const BessStateChart: React.FC<BessStateChartProps> = ({ data, assetType = 'bess' }) => {
+  // Aggiungi il context per la lingua
+  const langContext = useContext(LanguageContext);
+  if (!langContext) {
+    throw new Error("LanguageContext is not provided");
+  }
+  const { language } = langContext;
+  const t = translations[language].bessChart;
+  
   if (!data || data.length === 0) {
-    return <div className="text-center py-10">Nessun dato disponibile</div>;
+    return <div className="text-center py-10">{t.noDataAvailable}</div>;
   }
   
   // Aggiungi ID unici ai dati per evitare avvisi di chiave duplicata di React
@@ -75,7 +85,7 @@ const BessStateChart: React.FC<BessStateChartProps> = ({ data, assetType = 'bess
 
   return (
     <div className="w-full h-[400px] p-4">
-      <h3 className="text-xl font-semibold mb-4">Andamento BESS</h3>
+      <h3 className="text-xl font-semibold mb-4">{t.bessStatusChart}</h3>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
@@ -113,7 +123,7 @@ const BessStateChart: React.FC<BessStateChartProps> = ({ data, assetType = 'bess
                 yAxisId="left"
                 type="monotone"
                 dataKey="chargePercent"
-                name="Carica"
+                name={t.charge}
                 stroke="#2196F3"
                 unit="%"
                 strokeWidth={2}
@@ -124,7 +134,7 @@ const BessStateChart: React.FC<BessStateChartProps> = ({ data, assetType = 'bess
                 yAxisId="left"
                 type="monotone"
                 dataKey="healthPercent"
-                name="Salute"
+                name={t.health}
                 stroke="#4CAF50"
                 unit="%"
                 strokeWidth={2}
@@ -135,7 +145,7 @@ const BessStateChart: React.FC<BessStateChartProps> = ({ data, assetType = 'bess
                 yAxisId="right"
                 type="monotone"
                 dataKey="temperature"
-                name="Temperatura"
+                name={t.temperature}
                 stroke="#FF9800"
                 unit="°C"
                 strokeWidth={2}
@@ -167,7 +177,7 @@ const BessStateChart: React.FC<BessStateChartProps> = ({ data, assetType = 'bess
                 yAxisId="left"
                 type="monotone"
                 dataKey="outputMW"
-                name="Produzione"
+                name={t.production}
                 stroke="#FF5722"
                 unit=" MW"
                 strokeWidth={2}
@@ -178,7 +188,7 @@ const BessStateChart: React.FC<BessStateChartProps> = ({ data, assetType = 'bess
                 yAxisId="right"
                 type="monotone"
                 dataKey="performanceRatio"
-                name="Performance Ratio"
+                name={t.performanceRatio}
                 stroke="#9C27B0"
                 unit="%"
                 strokeWidth={2}
@@ -189,7 +199,7 @@ const BessStateChart: React.FC<BessStateChartProps> = ({ data, assetType = 'bess
                 yAxisId="right"
                 type="monotone"
                 dataKey="temperature"
-                name="Temperatura"
+                name={t.temperature}
                 stroke="#FF9800"
                 unit="°C"
                 strokeWidth={2}
