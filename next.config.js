@@ -11,9 +11,11 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   output: 'standalone',
-  // Escludi gli endpoint API dalla generazione statica e rendi i React Server Components
+  // Configurazione per l'API e il rendering serverless
   experimental: {
-    serverComponentsExternalPackages: ['recharts'],
+    serverActions: true,
+    // Gestione di recharts come pacchetto esterno
+    serverComponentsExternalPackages: ['recharts']
   }
 }
 
