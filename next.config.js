@@ -9,6 +9,11 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  output: 'standalone',
+  // Escludi gli endpoint API dalla generazione statica e rendi i React Server Components
+  experimental: {
+    serverComponentsExternalPackages: ['recharts'],
   }
 }
 

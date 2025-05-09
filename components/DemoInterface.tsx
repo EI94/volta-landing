@@ -5,7 +5,7 @@ import EnergyMarketDashboard from './EnergyMarketDashboard';
 import WeatherOpen from './WeatherOpen';
 import AIActionSuggestions, { AIAction } from './AIActionSuggestions';
 import { Tab } from '@headlessui/react';
-import { Gauge, Battery, Cpu, BarChart3, RefreshCw, MessageSquare, PlusCircle, Sun, TrendingUp, Currency, Layout, Activity, Zap } from 'lucide-react';
+import { Gauge, Battery, Cpu, BarChart3, RefreshCw, MessageSquare, PlusCircle, Sun, TrendingUp, Currency, Layout, Activity, Zap, Plus } from 'lucide-react';
 import Link from 'next/link';
 import OpenAIService, { ChatMessage } from '../lib/openai-service';
 import BessStateChart from './BessStateChart';
