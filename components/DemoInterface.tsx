@@ -5,7 +5,7 @@ import EnergyMarketDashboard from './EnergyMarketDashboard';
 import WeatherOpen from './WeatherOpen';
 import AIActionSuggestions, { AIAction } from './AIActionSuggestions';
 import { Tab } from '@headlessui/react';
-import { Gauge, Battery, Cpu, BarChart3, RefreshCw, MessageSquare, PlusCircle, Sun, TrendingUp, Currency, Layout, Activity, Zap, Plus } from 'lucide-react';
+import { Gauge, Battery, Cpu, BarChart3, RefreshCw, MessageSquare, PlusCircle, Sun, TrendingUp, Currency, Layout, Activity, Zap } from 'lucide-react';
 import Link from 'next/link';
 import OpenAIService, { ChatMessage } from '../lib/openai-service';
 import BessStateChart from './BessStateChart';
@@ -467,7 +467,7 @@ export default function DemoInterface() {
           
           <div className="mt-4 sm:mt-0 flex space-x-3">
             <Link href="/asset-registration" className="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600">
-              <Plus className="mr-2 h-4 w-4" />
+              <PlusCircle className="mr-2 h-4 w-4" />
               {t.registerNewAsset}
             </Link>
           </div>

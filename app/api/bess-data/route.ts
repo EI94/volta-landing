@@ -90,4 +90,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; 
