@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import BessStateChart from './BessStateChart';
 import MLOptimizationResults from './MLOptimizationResults';
-import { Card } from './Card';
+import Card from './Card';
 import { LanguageContext } from '../context/LanguageContext';
 import { translations } from '../translations';
 

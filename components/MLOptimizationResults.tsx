@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useContext } from 'react';
-import { Card } from './Card';
+import Card from './Card';
 import { LanguageContext } from '../context/LanguageContext';
 import { translations } from '../translations';
 

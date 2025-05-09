@@ -3,13 +3,38 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { LanguageContext } from "../context/LanguageContext";
 import { translations } from "../translations";
 
 export default function Header(): JSX.Element {
   const langContext = useContext(LanguageContext);
-  if (!langContext) throw new Error("LanguageContext not provided");
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  // Se il componente non è ancora montato, renderizza una versione semplificata dell'header
+  // per evitare problemi di hydration
+  if (!mounted) {
+    return (
+      <header className="bg-white shadow-md">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="w-[150px] h-[50px]"></div>
+          <nav className="hidden md:flex space-x-8">
+            <div className="text-gray-700"></div>
+            <div className="text-gray-700"></div>
+          </nav>
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-600 text-white px-5 py-2 rounded-full"></div>
+            <div className="border border-gray-300 rounded px-3 py-1"></div>
+          </div>
+        </div>
+      </header>
+    );
+  }
+  
   const { language, toggleLanguage } = langContext;
   const t = translations[language].header;
 
