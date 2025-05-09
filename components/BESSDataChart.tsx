@@ -53,11 +53,11 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
 
   // Metriche disponibili per la visualizzazione
   const metrics = [
-    { key: 'BESS_Power_kW', label: 'Potenza (kW)', color: '#8884d8', unit: 'kW' },
-    { key: 'BESS_SoC_%', label: 'Stato di Carica (%)', color: '#82ca9d', unit: '%' },
-    { key: 'Market_Price_EUR_MWh', label: 'Prezzo Mercato (€/MWh)', color: '#ffc658', unit: '€/MWh' },
-    { key: 'BESS_Temperature_C', label: 'Temperatura (°C)', color: '#ff8042', unit: '°C' },
-    { key: 'AC_Frequency_Hz', label: 'Frequenza (Hz)', color: '#0088fe', unit: 'Hz' }
+    { key: 'BESS_Power_kW', label: t.powerKW, color: '#8884d8', unit: 'kW' },
+    { key: 'BESS_SoC_%', label: t.stateOfCharge, color: '#82ca9d', unit: '%' },
+    { key: 'Market_Price_EUR_MWh', label: t.marketPrice, color: '#ffc658', unit: '€/MWh' },
+    { key: 'BESS_Temperature_C', label: t.temperatureC, color: '#ff8042', unit: '°C' },
+    { key: 'AC_Frequency_Hz', label: t.frequency, color: '#0088fe', unit: 'Hz' }
   ];
 
   // Filtraggio per intervallo di date
@@ -231,7 +231,7 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Sistema Accumulo (BESS) Viterbo - 60 MW / 240 MWh</h2>
+      <h2 className="text-xl font-bold mb-4">{t.systemStorage}</h2>
       
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -276,9 +276,7 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {range === 'hour' ? '1 ora' : 
-                   range === 'day' ? '1 giorno' : 
-                   range === 'week' ? '1 settimana' : '1 mese'}
+                  {t.timeRange[range as keyof typeof t.timeRange]}
                 </button>
               ))}
             </div>
@@ -287,15 +285,15 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
           {/* Statistiche principali */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="text-sm text-gray-500">Valore Minimo</p>
+              <p className="text-sm text-gray-500">{t.statistics.minValue}</p>
               <p className="text-2xl font-bold">{stats.min.toFixed(2)} {currentMetricUnit}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="text-sm text-gray-500">Valore Massimo</p>
+              <p className="text-sm text-gray-500">{t.statistics.maxValue}</p>
               <p className="text-2xl font-bold">{stats.max.toFixed(2)} {currentMetricUnit}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="text-sm text-gray-500">Valore Medio</p>
+              <p className="text-sm text-gray-500">{t.statistics.avgValue}</p>
               <p className="text-2xl font-bold">{stats.avg.toFixed(2)} {currentMetricUnit}</p>
             </div>
           </div>
@@ -337,7 +335,7 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
           </div>
           
           {/* Stato di carica nel tempo */}
-          <h3 className="text-lg font-semibold mb-3">Stato di Carica</h3>
+          <h3 className="text-lg font-semibold mb-3">{t.stateOfCharge}</h3>
           <div className="h-64 mb-8">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={socChartData}>
@@ -356,7 +354,7 @@ const BESSDataChart: React.FC<BESSDataChartProps> = ({ dataFile = 'bess_60MW_4h_
                     return date.toLocaleString();
                   }}
                   formatter={(value: number | string) => {
-                    return [typeof value === 'number' ? value.toFixed(2) + ' %' : value, 'Stato di Carica'];
+                    return [typeof value === 'number' ? value.toFixed(2) + ' %' : value, t.stateOfCharge];
                   }}
                 />
                 <Area 

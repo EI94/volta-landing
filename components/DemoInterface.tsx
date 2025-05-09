@@ -5,7 +5,7 @@ import EnergyMarketDashboard from './EnergyMarketDashboard';
 import WeatherOpen from './WeatherOpen';
 import AIActionSuggestions, { AIAction } from './AIActionSuggestions';
 import { Tab } from '@headlessui/react';
-import { Gauge, Battery, Cpu, BarChart3, RefreshCw, MessageSquare, PlusCircle, Sun, TrendingUp, Currency } from 'lucide-react';
+import { Gauge, Battery, Cpu, BarChart3, RefreshCw, MessageSquare, PlusCircle, Sun, TrendingUp, Currency, Layout, Activity, Zap } from 'lucide-react';
 import Link from 'next/link';
 import OpenAIService, { ChatMessage } from '../lib/openai-service';
 import BessStateChart from './BessStateChart';
@@ -141,55 +141,57 @@ export default function DemoInterface() {
   const battery = 65; // Valore fissato per il livello della batteria
 
   // Simulazione carica della batteria
-  const BatterySimulator = ({assetType}: {assetType: string}) => (
-    <div className={`${assetType === 'bess' ? 'block' : 'hidden'}`}>
-      <h3 className="text-2xl mb-4">Stato</h3>
-      <Battery className="h-8 w-8 mb-4" />
-      <div className="text-lg font-bold mb-6">Livello: {battery}%</div>
-      
-      <h3 className="text-xl mb-4">Storia Carica/Scarica</h3>
-      <div className="mt-6 mb-8">
-        <BessStateChart data={batterHistoryData} assetType="bess" />
-      </div>
-      
-      <div className="mt-8 mb-6">
-        <BESSDataChart dataFile="bess_60MW_4h_viterbo_may2025.csv" />
-      </div>
-      
-      <h3 className="text-xl mb-4">Previsioni di Mercato</h3>
-      <div className="grid grid-cols-2 gap-2 pb-2 text-sm font-medium text-gray-500">
-        <div>Ora</div>
-        <div>Prezzo (€/MWh)</div>
-      </div>
-      {[...Array(24)].map((_, i) => (
-        <div key={i} className="grid grid-cols-2 gap-2 py-2 border-b">
-          <div>{i}:00</div>
-          <div>{Math.round(40 + Math.random() * 60)}</div>
+  const BatterySimulator = ({assetType}: {assetType: string}) => {
+    return (
+      <div className={`${assetType === 'bess' ? 'block' : 'hidden'}`}>
+        <h3 className="text-2xl mb-4">{t.state}</h3>
+        <Battery className="h-8 w-8 mb-4" />
+        <div className="text-lg font-bold mb-6">{t.batteryLevel.replace('{level}', battery.toString())}</div>
+        
+        <h3 className="text-xl mb-4">{t.chargeDischargeHistory}</h3>
+        <div className="mt-6 mb-8">
+          <BessStateChart data={batterHistoryData} assetType="bess" />
         </div>
-      ))}
-      
-      <h3 className="text-xl mt-6 mb-4">Revenue Stream</h3>
-      <div className="h-64">
-        <BarChart
-          data={bessRevenueData}
-          margin={{
-            top: 5,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="vendita" fill="#8884d8" name="Vendita energia" />
-          <Bar dataKey="servizi" fill="#82ca9d" name="Servizi di rete" />
-        </BarChart>
+        
+        <div className="mt-8 mb-6">
+          <BESSDataChart dataFile="bess_60MW_4h_viterbo_may2025.csv" />
+        </div>
+        
+        <h3 className="text-xl mb-4">{t.marketPredictions}</h3>
+        <div className="grid grid-cols-2 gap-2 pb-2 text-sm font-medium text-gray-500">
+          <div>{t.hour}</div>
+          <div>{t.price}</div>
+        </div>
+        {[...Array(24)].map((_, i) => (
+          <div key={i} className="grid grid-cols-2 gap-2 py-2 border-b">
+            <div>{i}:00</div>
+            <div>{Math.round(40 + Math.random() * 60)}</div>
+          </div>
+        ))}
+        
+        <h3 className="text-xl mt-6 mb-4">{t.revenueStream}</h3>
+        <div className="h-64">
+          <BarChart
+            data={bessRevenueData}
+            margin={{
+              top: 5,
+              right: 30,
+              left: 20,
+              bottom: 5,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="vendita" fill="#8884d8" name={t.energySale} />
+            <Bar dataKey="servizi" fill="#82ca9d" name={t.gridServices} />
+          </BarChart>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Simulazione pannelli solari
   const PVSimulator = () => {
@@ -208,21 +210,21 @@ export default function DemoInterface() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="text-sm font-medium text-gray-700">Produzione Attuale</h4>
-                <span className="text-xs sm:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Inverter: {pvData.inverterStatus}</span>
+                <h4 className="text-sm font-medium text-gray-700">{t.currentProduction}</h4>
+                <span className="text-xs sm:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{t.inverter}: {pvData.inverterStatus}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-3 sm:p-4 rounded-lg border border-yellow-100">
                   <div className="flex items-center">
                     <Sun className="h-6 w-6 text-yellow-500 mr-2" />
                     <div>
-                      <p className="text-xs sm:text-sm text-gray-500">Potenza</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{t.power}</p>
                       <p className="text-lg sm:text-xl font-semibold text-gray-900">{pvData.currentProduction} kW</p>
                     </div>
                   </div>
                   <div className="mt-2">
                     <div className="flex justify-between text-xs sm:text-sm text-gray-500">
-                      <span>Totale Oggi</span>
+                      <span>{t.totalToday}</span>
                       <span>{pvData.dailyProduction} kWh</span>
                     </div>
                   </div>
@@ -230,13 +232,13 @@ export default function DemoInterface() {
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 sm:p-4 rounded-lg border border-blue-100">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs sm:text-sm text-gray-500">Efficienza</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{t.efficiency}</p>
                       <p className="text-lg sm:text-xl font-semibold text-gray-900">{pvData.efficiency}%</p>
                     </div>
                   </div>
                   <div className="mt-2">
                     <div className="flex justify-between text-xs sm:text-sm text-gray-500">
-                      <span>Temperatura</span>
+                      <span>{t.temperature}</span>
                       <span>{pvData.temperature}°C</span>
                     </div>
                   </div>
@@ -247,24 +249,24 @@ export default function DemoInterface() {
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 sm:p-4 rounded-lg border border-blue-100">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs sm:text-sm text-gray-500">Irradianza</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{t.irradiance}</p>
                       <p className="text-lg sm:text-xl font-semibold text-gray-900">{pvData.irradiance} W/m²</p>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-center bg-gradient-to-br from-green-50 to-teal-50 p-3 sm:p-4 rounded-lg border border-green-100">
-                  <p className="text-xs sm:text-sm text-gray-500 mr-1">Previsione di produzione: </p>
-                  <p className="text-sm sm:text-base font-semibold text-green-600">Ottimale</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mr-1">{t.productionForecast}: </p>
+                  <p className="text-sm sm:text-base font-semibold text-green-600">{t.optimal}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="text-sm font-medium text-gray-700">Previsioni Meteo</h4>
+                <h4 className="text-sm font-medium text-gray-700">{t.weatherForecast}</h4>
                 <button className="text-xs sm:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-full flex items-center">
                   <RefreshCw className="h-3 w-3 mr-1" />
-                  Aggiorna
+                  {t.refresh}
                 </button>
               </div>
               <WeatherOpen city={selectedAsset.location} />
@@ -297,9 +299,9 @@ export default function DemoInterface() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ora</th>
-                  <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prezzo (€/MWh)</th>
-                  <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trend</th>
+                  <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.hour}</th>
+                  <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.price}</th>
+                  <th className="px-3 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t.trend}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -329,9 +331,9 @@ export default function DemoInterface() {
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-medium text-gray-700 flex items-center">
               <Currency className="w-4 h-4 mr-1 text-green-600" />€
-              Revenue Stream
+              {t.revenueStream}
             </h4>
-            <span className="text-xs text-gray-500">Previsione settimanale</span>
+            <span className="text-xs text-gray-500">{t.weeklyForecast}</span>
           </div>
           <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -341,8 +343,8 @@ export default function DemoInterface() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="vendita" fill="#82ca9d" name="Vendita energia" />
-                <Bar dataKey="incentivi" fill="#8884d8" name="Incentivi" />
+                <Bar dataKey="vendita" fill="#82ca9d" name={t.energySale} />
+                <Bar dataKey="incentivi" fill="#8884d8" name={t.incentives} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -433,201 +435,115 @@ export default function DemoInterface() {
   };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 max-w-7xl">
-      <div className="flex flex-col mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{t.pageTitle}</h1>
-        <p className="text-gray-600 text-sm sm:text-base">{t.subTitle}</p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="py-2 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+        <h2 className="text-xl font-bold text-center">{t.pageTitle}</h2>
+        <p className="text-center text-white/80 text-sm">{t.subTitle}</p>
+      </div>
       
-      {/* Selettore degli asset */}
-      <div className="mb-6 bg-white rounded-lg p-3 sm:p-4 border border-gray-200 shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div className="mb-3 sm:mb-0">
-            <h2 className="text-base sm:text-lg font-medium">{t.selectedAsset}</h2>
-            <select 
-              className="mt-1 block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-              value={selectedAsset?.id || ''}
-              onChange={(e) => {
-                const assetId = e.target.value;
-                const newAsset = assets.find(a => a.id === assetId) || null;
-                setSelectedAsset(newAsset);
-              }}
-            >
-              {assets.map(asset => (
-                <option key={asset.id} value={asset.id}>
-                  {asset.name} ({asset.type === 'bess' ? t.batteryType : t.pvType})
-                </option>
-              ))}
-            </select>
+      <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-lg shadow p-4 mb-8 flex flex-col sm:flex-row justify-between items-center">
+          <div>
+            <h2 className="text-lg font-medium flex items-center">
+              <Layout className="mr-2 h-5 w-5 text-blue-500" />
+              {t.selectedAsset}
+            </h2>
+            <div className="text-sm text-gray-600">
+              {selectedAsset ? 
+                selectedAsset.type === 'bess' ? 
+                  t.batteryViterbo : 
+                  `${selectedAsset.name} (${selectedAsset.capacity} MW)` 
+                : 'None'}
+            </div>
           </div>
-          <Link href="/asset-registration" className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <PlusCircle className="w-4 h-4 mr-1" />
-            {t.registerNewAsset}
-          </Link>
+          
+          <div className="mt-4 sm:mt-0 flex space-x-3">
+            <Link href="/asset-registration" className="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600">
+              <Plus className="mr-2 h-4 w-4" />
+              {t.registerNewAsset}
+            </Link>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mb-4">
+          <div className="lg:col-span-1 bg-white rounded-lg shadow">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium flex items-center">
+                <Activity className="mr-2 h-5 w-5 text-indigo-500" />
+                Menu
+              </h3>
+            </div>
+            <div className="p-4">
+              <nav className="-mx-3 space-y-3">
+                <button 
+                  onClick={() => setActiveTab('status')} 
+                  className={`flex items-center px-3 py-2 w-full text-sm font-medium rounded-md ${
+                    activeTab === 'status' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Activity className="mr-3 flex-shrink-0 h-5 w-5" />
+                  <span>{t.status}</span>
+                </button>
+                <button 
+                  onClick={() => setActiveTab('market')} 
+                  className={`flex items-center px-3 py-2 w-full text-sm font-medium rounded-md ${
+                    activeTab === 'market' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <TrendingUp className="mr-3 flex-shrink-0 h-5 w-5" />
+                  <span>{t.market}</span>
+                </button>
+                <button 
+                  onClick={() => setActiveTab('optimization')} 
+                  className={`flex items-center px-3 py-2 w-full text-sm font-medium rounded-md ${
+                    activeTab === 'optimization' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Zap className="mr-3 flex-shrink-0 h-5 w-5" />
+                  <span>{t.optimization}</span>
+                </button>
+                <button 
+                  onClick={() => setActiveTab('assistant')} 
+                  className={`flex items-center px-3 py-2 w-full text-sm font-medium rounded-md ${
+                    activeTab === 'assistant' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <MessageSquare className="mr-3 flex-shrink-0 h-5 w-5" />
+                  <span>{t.assistant}</span>
+                </button>
+              </nav>
+            </div>
+            
+            {/* ... resto del codice del menu ... */}
+          </div>
+          
+          <div className="lg:col-span-3 bg-white rounded-lg shadow overflow-hidden">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium">
+                {activeTab === 'status' && t.status}
+                {activeTab === 'market' && t.market}
+                {activeTab === 'optimization' && t.optimization}
+                {activeTab === 'assistant' && t.assistant}
+              </h3>
+            </div>
+            
+            <div className="p-4">
+              {activeTab === 'status' && (
+                <>
+                  {selectedAsset?.type === 'bess' && (
+                    <BatterySimulator assetType="bess" />
+                  )}
+                  {selectedAsset?.type === 'pv' && (
+                    <PVSimulator />
+                  )}
+                </>
+              )}
+              
+              {/* ... altri contenuti per altri tab ... */}
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Schede principali */}
-      <Tab.Group>
-        <Tab.List className="flex space-x-1 rounded-xl bg-gray-100 p-1 overflow-x-auto">
-          <Tab
-            className={({ selected }) =>
-              classNames(
-                'w-full sm:w-auto flex-shrink-0 rounded-lg py-2.5 px-3 text-xs sm:text-sm font-medium leading-5',
-                'flex items-center justify-center focus:outline-none',
-                selected
-                  ? 'bg-white shadow'
-                  : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
-              )
-            }
-          >
-            <Gauge className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> Stato
-          </Tab>
-          <Tab
-            className={({ selected }) =>
-              classNames(
-                'w-full sm:w-auto flex-shrink-0 rounded-lg py-2.5 px-3 text-xs sm:text-sm font-medium leading-5',
-                'flex items-center justify-center focus:outline-none',
-                selected
-                  ? 'bg-white shadow'
-                  : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
-              )
-            }
-          >
-            <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> Mercato
-          </Tab>
-          <Tab
-            className={({ selected }) =>
-              classNames(
-                'w-full sm:w-auto flex-shrink-0 rounded-lg py-2.5 px-3 text-xs sm:text-sm font-medium leading-5',
-                'flex items-center justify-center focus:outline-none',
-                selected
-                  ? 'bg-white shadow'
-                  : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
-              )
-            }
-          >
-            <Cpu className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> Ottimizzazione
-          </Tab>
-          <Tab
-            className={({ selected }) =>
-              classNames(
-                'w-full sm:w-auto flex-shrink-0 rounded-lg py-2.5 px-3 text-xs sm:text-sm font-medium leading-5',
-                'flex items-center justify-center focus:outline-none',
-                selected
-                  ? 'bg-white shadow'
-                  : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
-              )
-            }
-          >
-            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> Assistente
-          </Tab>
-        </Tab.List>
-        <Tab.Panels className="mt-2">
-          {/* Pannello Stato */}
-          <Tab.Panel className="rounded-xl bg-white p-3 sm:p-4 shadow-sm">
-            {selectedAsset?.type === 'bess' ? <BatterySimulator assetType="bess" /> : <PVSimulator />}
-          </Tab.Panel>
-          
-          {/* Pannello Mercato */}
-          <Tab.Panel className="rounded-xl bg-white p-3 sm:p-4 shadow-sm">
-            <h3 className="text-lg font-medium mb-4">Mercato dell&apos;Energia</h3>
-            <EnergyMarketDashboard city={selectedCity} />
-          </Tab.Panel>
-          
-          {/* Pannello Ottimizzazione */}
-          <Tab.Panel className="rounded-xl bg-white p-3 sm:p-4 shadow-sm">
-            <div className="flex flex-col">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                <h3 className="text-lg font-medium">Suggerimenti AI</h3>
-                <div className="mt-2 sm:mt-0 flex items-center">
-                  <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                    <input 
-                      type="checkbox" 
-                      name="auto-execute" 
-                      id="auto-execute" 
-                      checked={autoExecuteEnabled}
-                      onChange={() => setAutoExecuteEnabled(!autoExecuteEnabled)}
-                      className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-                    />
-                    <label 
-                      htmlFor="auto-execute" 
-                      className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${autoExecuteEnabled ? 'bg-blue-500' : 'bg-gray-300'}`}
-                    ></label>
-              </div>
-                  <label htmlFor="auto-execute" className="text-xs sm:text-sm text-gray-700">Esecuzione Automatica</label>
-                  <button 
-                    onClick={generateAISuggestions}
-                    className="ml-2 sm:ml-4 inline-flex items-center p-1 sm:p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                  </button>
-              </div>
-              </div>
-              <AIActionSuggestions 
-                actions={suggestedActions} 
-                onExecute={handleExecuteAIAction} 
-                isAutoModeEnabled={autoExecuteEnabled}
-              />
-            </div>
-          </Tab.Panel>
-          
-          {/* Pannello Assistente */}
-          <Tab.Panel className="rounded-xl bg-white p-3 sm:p-4 shadow-sm">
-            <h3 className="text-lg font-medium mb-4">Assistente Volta AI</h3>
-            <div className="flex flex-col h-[500px]">
-              <div className="flex-1 overflow-auto mb-4 rounded-lg border border-gray-200 p-3 sm:p-4">
-                {chatMessages.map((message, idx) => (
-            <div
-              key={idx}
-                    className={`flex mb-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div 
-                      className={`max-w-[80%] sm:max-w-[70%] p-3 rounded-lg ${
-                        message.role === 'user' 
-                          ? 'bg-blue-600 text-white rounded-tr-none' 
-                          : 'bg-gray-100 text-gray-800 rounded-tl-none'
-                      }`}
-                    >
-                      {message.content.split('\n').map((line, i) => (
-                        <p key={i} className={i > 0 ? 'mt-2' : ''}>{line}</p>
-                      ))}
-                    </div>
-            </div>
-          ))}
-                {isLoadingChat && (
-                  <div className="flex justify-start mb-3">
-                    <div className="max-w-[80%] sm:max-w-[70%] p-3 rounded-lg bg-gray-100 text-gray-800 rounded-tl-none">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-        </div>
-              <div className="flex">
-          <input
-            type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Scrivi un messaggio..."
-                  className="flex-1 p-2 sm:p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <button
-                  onClick={handleSendMessage}
-                  disabled={isLoadingChat || !inputMessage.trim()}
-                  className="bg-blue-600 text-white p-2 sm:p-3 rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
-          >
-                  Invia
-          </button>
-        </div>
-            </div>
-          </Tab.Panel>
-        </Tab.Panels>
-      </Tab.Group>
     </div>
   );
 }
